@@ -1,0 +1,14 @@
+# Git ignore
+credentials/
+*.credentials
+.env
+*.log
+current-page.html
+*.pyc
+__pycache__/
+node_modules/
+.cache/
+.herms/
+delivery/smart-sandwich-menu-display/
+sketches/
+*.sha256.md
