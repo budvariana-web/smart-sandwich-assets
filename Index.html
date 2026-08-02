@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="<?= lang ?>">
 <head>
   <base target="_top">
   <meta charset="utf-8">
@@ -8,6 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Menu</title>
+  <script>window.MENU_LANG = '<?= lang ?>';</script>
   <style>
 @font-face {
   font-family: 'Glock Grotesque';
@@ -300,7 +301,7 @@
       <header>
         <div>
           <div class="brand" id="brand">SMART SANDWICH BAR</div>
-          <div class="subtitle">АКТУАЛЬНОЕ МЕНЮ</div>
+          <div class="subtitle" id="subtitle">АКТУАЛЬНОЕ МЕНЮ</div>
         </div>
         <div class="page-count" id="page-count"></div>
       </header>
@@ -320,7 +321,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
-          <div class="video-label">Промо-ролик</div>
+          <div class="video-label" id="video-label">Промо-ролик</div>
         </div>
         <div class="video-counter" id="video-counter"></div>
       </div>
@@ -332,9 +333,31 @@
   </div>
 
   <script>
-    var CACHE_KEY = 'sb-v3';
+    var CACHE_KEY = 'sb-v3' + (window.MENU_LANG === 'me' ? '-me' : '-ru');
     var BUILD_ID  = '%%BUILD_ID%%';
     var CARDS_PER_PAGE = 3;
+
+    /* === I18N === */
+    var I18N = {
+      ru: {
+        subtitle: 'АКТУАЛЬНОЕ МЕНЮ', offline: 'НЕТ СВЯЗИ', loading: 'Загрузка меню...',
+        video: 'Промо-ролик', empty: 'Сейчас нет доступных позиций', akcija: 'Акция',
+        error: 'Ошибка загрузки', cached: 'Показана сохранённая версия', updated: 'Обновлено'
+      },
+      me: {
+        subtitle: 'AKTUELNI MENI', offline: 'NEMA VEZE', loading: 'Učitavanje menija...',
+        video: 'Promo video', empty: 'Trenutno nema dostupnih stavki', akcija: 'Akcija',
+        error: 'Greška pri učitavanju', cached: 'Prikazana sačuvana verzija', updated: 'Ažurirano'
+      }
+    };
+    var T = I18N[window.MENU_LANG] || I18N.ru;
+    var TIME_LOCALE = window.MENU_LANG === 'me' ? 'sr-RS' : 'ru-RU';
+
+    document.getElementById('subtitle').textContent = T.subtitle;
+    document.getElementById('video-label').textContent = T.video;
+    document.getElementById('updated').textContent = T.loading;
+    document.getElementById('offline').textContent = T.offline;
+
     var state = {
       data: null, pages: [], page: 0,
       pageTimer: null, refreshTimer: null, videoTimer: null, annTimer: null,
@@ -386,7 +409,7 @@
       var items = state.pages[state.page] || [];
       $('menu').innerHTML = items.length
         ? items.map(itemMarkup).join('')
-        : '<div class="empty">Сейчас нет доступных позиций</div>';
+        : '<div class="empty">' + T.empty + '</div>';
       $('page-count').textContent = state.pages.length > 1
         ? (state.page + 1) + ' / ' + state.pages.length : '';
     }
@@ -499,8 +522,8 @@
       tText.textContent = anns[topIdx];
       bText.textContent = anns.length > 1 ? anns[bottomIdx] : '';
       bottom.style.display = anns.length > 1 ? '' : 'none';
-      tBadge.textContent = anns.length > 1 ? 'Акция ' + (topIdx + 1) + ' / ' + anns.length : '';
-      bBadge.textContent = anns.length > 1 ? 'Акция ' + (bottomIdx + 1) + ' / ' + anns.length : '';
+      tBadge.textContent = anns.length > 1 ? T.akcija + ' ' + (topIdx + 1) + ' / ' + anns.length : '';
+      bBadge.textContent = anns.length > 1 ? T.akcija + ' ' + (bottomIdx + 1) + ' / ' + anns.length : '';
     }
 
     function scheduleAnnouncements() {
@@ -517,7 +540,7 @@
     /* === APPLY DATA === */
     function applyMenu(data, cached) {
       if (!data || !Array.isArray(data.items)) {
-        $('updated').textContent = '\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438';
+        $('updated').textContent = T.error;
         return;
       }
       state.data = data;
@@ -525,8 +548,8 @@
       state.page = 0;
       $('brand').textContent = data.brand || 'SMART SANDWICH BAR';
       $('updated').textContent = cached
-        ? '\u041f\u043e\u043a\u0430\u0437\u0430\u043d\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u0430\u044f \u0432\u0435\u0440\u0441\u0438\u044f'
-        : '\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u043e ' + new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+        ? T.cached
+        : T.updated + ' ' + new Date().toLocaleTimeString(TIME_LOCALE, {hour:'2-digit', minute:'2-digit'});
       $('offline').classList.toggle('visible', Boolean(cached));
 
       renderPage();
@@ -563,7 +586,7 @@
     var API_BASE = 'https://script.google.com/macros/s/AKfycbxlyDvP-_TbVVXGXG7_rxKdXvowJxPu8gn8BXpLKuGnfsCmpHL71CXIWSVUbbamwY4skg/exec';
 
     function loadMenu() {
-      var url = API_BASE + '?page=data';
+      var url = API_BASE + '?page=data' + (window.MENU_LANG === 'me' ? '&lang=me' : '');
       fetch(url)
         .then(function(r) {
           if (!r.ok) throw new Error('HTTP ' + r.status);

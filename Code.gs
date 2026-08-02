@@ -4,7 +4,9 @@
  */
 const CONFIG = Object.freeze({
   MENU_SHEET_NAME: 'MENU',
+  MENU_SHEET_ME: 'MENU_ME',
   DEFAULT_BRAND: 'SMART SANDWICH BAR',
+  DEFAULT_LANG: 'ru',
   DEFAULT_REFRESH_SECONDS: 60,
   MAX_REFRESH_SECONDS: 600,
   BUILD_ID: '%%BUILD_ID%%',
@@ -15,13 +17,40 @@ const CONFIG = Object.freeze({
   ]
 });
 
+/**
+ * Resolve display language: 'me' (crnogorski) or 'ru' (default).
+ * Priority: URL param ?lang=me > SETTINGS 'Язык' > DEFAULT_LANG.
+ */
+function resolveLang_(e) {
+  var urlLang = (e && e.parameter && e.parameter.lang) ? String(e.parameter.lang).toLowerCase() : '';
+  if (urlLang === 'me' || urlLang === 'sr' || urlLang === 'cnr' || urlLang === 'cg') return 'me';
+  if (urlLang === 'ru' || urlLang === 'rus') return 'ru';
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var settingsSheet = ss.getSheetByName('SETTINGS');
+  if (settingsSheet) {
+    var sd = settingsSheet.getDataRange().getValues();
+    for (var r = 1; r < sd.length; r++) {
+      var key = normalize_(String(sd[r][0])).toLowerCase();
+      if (key === 'язык' || key === 'lang' || key === 'language') {
+        var val = normalize_(String(sd[r][1])).toLowerCase();
+        if (val.indexOf('me') === 0 || val === 'cnr' || val === 'cg') return 'me';
+        if (val === 'ru' || val === 'rus') return 'ru';
+      }
+    }
+  }
+  return CONFIG.DEFAULT_LANG;
+}
+
 function doGet(e) {
   var param = (e && e.parameter && e.parameter.page) || '';
+  var lang = resolveLang_(e);
   if (param === 'data') {
-    return ContentService.createTextOutput(JSON.stringify(readMenuItems_()))
+    return ContentService.createTextOutput(JSON.stringify(readMenuItems_(lang)))
       .setMimeType(ContentService.MimeType.JSON);
   }
-  return HtmlService.createTemplateFromFile('Index').evaluate()
+  var t = HtmlService.createTemplateFromFile('Index');
+  t.lang = lang;
+  return t.evaluate()
     .setTitle('Smart Sandwich Bar - menu')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
@@ -29,7 +58,7 @@ function doGet(e) {
 
 function doPost(e) { return doGet(e); }
 
-function getData() { return readMenuItems_(); }
+function getData(lang) { return readMenuItems_(lang); }
 
 function include_(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
@@ -60,9 +89,11 @@ function normalize_(value) {
 }
 
 /* === ANNOUNCEMENTS === */
-function readAnnouncements_() {
+function readAnnouncements_(lang) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var names = ['ОБЪЯВЛЕНИЯ', 'ANNOUNCEMENTS', 'Объявления', 'Announcements'];
+  var names = (lang === 'me')
+    ? ['OBAVE_ME', 'ОБЈАВЕ_МЕ', 'ОБЈАВЕ', 'ANNOUNCEMENTS_ME', 'OBAVE']
+    : ['ОБЪЯВЛЕНИЯ', 'ANNOUNCEMENTS', 'Объявления', 'Announcements'];
   var sheet = null;
   for (var i = 0; i < names.length; i++) {
     sheet = ss.getSheetByName(names[i]);
@@ -70,8 +101,8 @@ function readAnnouncements_() {
   }
   if (!sheet) {
     try {
-      sheet = ss.insertSheet('ОБЪЯВЛЕНИЯ');
-      sheet.getRange(1, 1).setValue('Объявление');
+      sheet = ss.insertSheet(lang === 'me' ? 'OBAVE_ME' : 'ОБЪЯВЛЕНИЯ');
+      sheet.getRange(1, 1).setValue(lang === 'me' ? 'Objava' : 'Объявление');
     } catch (err) {
       return [];
     }
@@ -81,7 +112,7 @@ function readAnnouncements_() {
   var start = 0;
   if (data.length > 0) {
     var first = normalize_(String(data[0][0])).toLowerCase();
-    if (first.indexOf('объявл') === 0 || first.indexOf('announcement') === 0) start = 1;
+    if (first.indexOf('объявл') === 0 || first.indexOf('announcement') === 0 || first.indexOf('objav') === 0) start = 1;
   }
   for (var r = start; r < data.length; r++) {
     var txt = normalize_(String(data[r][0]));
@@ -104,10 +135,12 @@ function parseVideoUrls_(val) {
     });
 }
 
-function readMenuItems_() {
+function readMenuItems_(lang) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var menuSheet = ss.getSheetByName(CONFIG.MENU_SHEET_NAME) || ss.getSheets()[1];
-  if (!menuSheet) return { items: [], brand: CONFIG.DEFAULT_BRAND };
+  var isMe = (lang === 'me');
+  var sheetName = isMe ? CONFIG.MENU_SHEET_ME : CONFIG.MENU_SHEET_NAME;
+  var menuSheet = ss.getSheetByName(sheetName) || ss.getSheetByName(CONFIG.MENU_SHEET_NAME);
+  if (!menuSheet) return { items: [], brand: CONFIG.DEFAULT_BRAND, lang: lang };
   var settingsSheet = ss.getSheetByName('SETTINGS');
   var data = menuSheet.getDataRange().getValues();
   if (data.length < 2) return { items: [], brand: CONFIG.DEFAULT_BRAND };
@@ -166,10 +199,10 @@ function readMenuItems_() {
   return {
     items: items, brand: brand,
     refreshSeconds: refreshSec, pageSeconds: pageSec, videoSeconds: videoSec,
-    announcements: readAnnouncements_(), announcementSeconds: annSec,
+    announcements: readAnnouncements_(lang), announcementSeconds: annSec,
     videoUrls: videoUrls, buildId: CONFIG.BUILD_ID,
-    sourceSheet: menuSheet.getName()
+    sourceSheet: menuSheet.getName(), lang: lang
   };
 }
 
-function getMenu() { return readMenuItems_(); }
+function getMenu() { return readMenuItems_(resolveLang_(null)); }
