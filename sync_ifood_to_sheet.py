@@ -91,6 +91,16 @@ def clean_desc(key):
     MANUAL_DESC = {
         'Smart_Sandwich_Bar__Black_Beef_Burger': 'Чёрная булочка бриош (выпекаем сами), авторский соус с лёгкой остринкой, говяжья котлета (только мясо и специи), сыр Чеддер, карамелизированный лук, свежий помидор, листья салата.',
         'Smart_Sandwich_Bar__Burger_Combo_Burger_Fries_Sauce': 'Чёрный МАЧО бургер с говядиной, картофель фри с копчёной паприкой и соус на выбор: кетчуп, кетчуп с чили или айоли с французской горчицей (хенд мейд).',
+        # Drafts added 2026-08-02 for items with no i-food description
+        'Smart_Sandwich_Bar__Salami_Sandwich': 'Чиабатта (выпекаем сами), итальянская салями, свежий помидор, листья салата и соус на выбор. Разогревается в пресс-гриле до хрустящей корочки.',
+        'Smart_Sandwich_Bar__Bruschetta_with_Caramelized_Onion_and_Prosciutto': 'Хрустящий поджаренный хлеб, карамелизированный лук и нежный пршут.',
+        'Smart_Sandwich_Bar__Bruschetta_with_Cherry_Tomatoes_Olives_and_Salami': 'Хрустящий поджаренный хлеб с томатами черри, маслинами и салями.',
+        'Smart_Sandwich_Bar__Focaccia_with_Olives_and_Cheese': 'Домашняя фокачча (выпекаем сами) с маслинами и сыром. Целая фокачча — как закуска или основа для сэндвича.',
+        'Smart_Sandwich_Bar__French_Fries': 'Золотистый картофель фри (150 г). Подаётся с соусом на выбор: кетчуп, кетчуп с чили или айоли.',
+        'Smart_Sandwich_Bar__Caramelized_Onion': 'Сладкий томлёный лук — идеальная добавка к бургерам, гренкам и сэндвичам.',
+        'Smart_Sandwich_Bar__Aioli': 'Домашний соус айоли (хенд мейд) с французской горчицей — к бургерам, фри и гренкам.',
+        'Smart_Sandwich_Bar__Spicy_Ketchup': 'Кетчуп с чили — пикантная острота для бургеров, фри и гренок.',
+        'Smart_Sandwich_Bar__ketchup': 'Классический кетчуп — к бургерам, фри и гренкам.',
     }
     if key in MANUAL_DESC:
         return MANUAL_DESC[key]
