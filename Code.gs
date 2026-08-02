@@ -7,7 +7,7 @@ const CONFIG = Object.freeze({
   DEFAULT_BRAND: 'SMART SANDWICH BAR',
   DEFAULT_REFRESH_SECONDS: 60,
   MAX_REFRESH_SECONDS: 600,
-  BUILD_ID: '%%BUILD_ID%%',
+  BUILD_ID: 'menu-20260802-glock',
   GITHUB_ASSETS_BASE: 'https://raw.githubusercontent.com/budvariana-web/smart-sandwich-assets/main/assets/',
   FALLBACK_VIDEO_URLS: [
     'https://raw.githubusercontent.com/budvariana-web/smart-sandwich-assets/main/assets/videos/video_9c3d99d89a14.mp4',
