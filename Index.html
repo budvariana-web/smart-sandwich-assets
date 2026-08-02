@@ -170,7 +170,10 @@
       flex: 1 1 auto;   /* grows: keeps price pinned to card bottom */
       min-height: 0;
       overflow: hidden;
-      display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical;
+      /* 14 lines = fits the tightest card (3-line name) with ~4px spare;
+         current longest description is 6 lines. Raised from 6 so longer
+         descriptions (edited in the sheet) still render fully. */
+      display: -webkit-box; -webkit-line-clamp: 14; -webkit-box-orient: vertical;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
