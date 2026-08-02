@@ -119,12 +119,16 @@ function readMenuItems_() {
     headers.forEach(function(h, c) { if (h) obj[h] = row[c]; });
     var name = normalize_(obj['название'] || obj['name'] || '');
     if (!name) continue;
+    // Description precedence: 'Описание наше' (J) wins, else 'Описание i-food' (C),
+    // else legacy 'Описание' (pre-split sheets).
+    var descOurs = normalize_(obj['описание наше'] || obj['наше описание'] || obj['описание своё'] || '');
+    var descIfood = normalize_(obj['описание i-food'] || obj['описание ifood'] || obj['описание'] || obj['description'] || '');
     items.push({
       name: name,
       category: normalize_(obj['категория'] || obj['category'] || ''),
       price: normalize_(obj['цена'] || obj['price'] || ''),
       oldPrice: normalize_(obj['старая цена'] || obj['old price'] || ''),
-      description: normalize_(obj['описание'] || obj['description'] || ''),
+      description: descOurs || descIfood,
       badge: normalize_(obj['бейдж'] || obj['badge'] || ''),
       imageUrl: safeImageUrl_(obj['фото'] || obj['photo'] || obj['image'] || '') || (FALLBACK_IMAGES[name] ? CONFIG.GITHUB_ASSETS_BASE + 'images/' + FALLBACK_IMAGES[name] : '')
     });
