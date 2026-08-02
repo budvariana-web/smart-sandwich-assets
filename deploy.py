@@ -47,6 +47,13 @@ def api(token, path, method="GET", body=None):
 def deploy(description="deploy"):
     token = get_token()
 
+    # Unique build marker injected into both Code.gs and Index.html.
+    # Lets verifiers (and us) tell fresh HTML from proxy-cached stale HTML.
+    build_id = "b" + time.strftime("%y%m%d-%H%M%S")
+    print(f"  BUILD_ID: {build_id}")
+    with open(os.path.join(BASE_DIR, "last-build.txt"), "w") as _f:
+        _f.write(build_id)
+
     # Read files
     files = []
     for fname in ["Code.gs", "Index.html", "Assets.html", "appsscript.json"]:
@@ -55,6 +62,7 @@ def deploy(description="deploy"):
             path = os.path.join(BASE_DIR, fname)
         with open(path, "r", encoding="utf-8") as f:
             content = f.read()
+        content = content.replace("%%BUILD_ID%%", build_id)
         if fname == "Code.gs":
             files.append({"name": fname, "type": "SERVER_JS", "source": content})
         elif fname == "appsscript.json":
