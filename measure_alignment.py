@@ -97,6 +97,43 @@ def main():
                 pass
             page.wait_for_timeout(2000)
 
+        # Guard against the GAS proxy stale-HTML pitfall: verify BUILD_ID,
+        # reload top page until fresh (like verify_menu.py).
+        expected = None
+        try:
+            with open(r"C:\Users\Asus\AppData\Local\hermes\projects\smart-sandwich-bar\last-build.txt") as _f:
+                expected = _f.read().strip()
+        except Exception:
+            pass
+        if expected:
+            for _attempt in range(4):
+                actual = frame.evaluate("() => window.BUILD_ID || ''")
+                if actual == expected:
+                    break
+                print(f"[measure] stale BUILD_ID {actual!r}, reloading top page")
+                page.reload(wait_until="domcontentloaded")
+                page.wait_for_timeout(8000)
+                # re-find frame
+                frame = None
+                for _ in range(6):
+                    for f in page.frames:
+                        try:
+                            if f.evaluate("() => !!document.querySelector('.layout')"):
+                                frame = f
+                                break
+                        except Exception:
+                            pass
+                    if frame:
+                        break
+                    page.wait_for_timeout(3000)
+                for _ in range(15):
+                    try:
+                        if frame.evaluate("() => document.querySelectorAll('.card').length > 0"):
+                            break
+                    except Exception:
+                        pass
+                    page.wait_for_timeout(2000)
+
         data = frame.evaluate(JS)
         print(json.dumps(data, ensure_ascii=False, indent=1))
         browser.close()
