@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Sync i-food.me menu into Google Sheet MENU tab (Smart Sandwich Bar TV board)."""
+"""Sync i-food.me menu into Google Sheet MENU tab (Smart Sandwich Bar TV board).
+
+Column model (MENU):
+  A Категория | B Название | C Описание i-food | D Цена | E Старая цена
+  F В наличии | G Порядок  | H Фото            | I Бейдж | J Описание наше
+
+- C ('Описание i-food') is OWNED by this script: rewritten from the i-food API
+  (menu_lang_texts '<item>__description') on every run. Empty if API has none.
+- J ('Описание наше') is USER-OWNED: this script never overwrites a non-empty
+  value. It reads existing J from the sheet and preserves it. Only fills J with
+  defaults for drinks that are not on i-food at all.
+- Effective description (what the TV board shows) is computed by Code.gs:
+  J (ours) wins if non-empty, otherwise C (i-food).
+"""
 import json, time, base64, urllib.parse, urllib.request
 
 SHEET_ID = '1i4Oz_e_dDuOzIYhOvM-QmEcmCQTpf3qG4SM0U7_Qw-A'
@@ -86,24 +99,15 @@ CLEAN_NAMES = {
     'Smart_Sandwich_Bar__ketchup': 'Кетчуп',
 }
 
+# Default 'ours' descriptions for drinks (not on i-food); user can edit in sheet
+DRINK_DESC = {
+    'Лимонад': 'Домашний, 0.4 л',
+    'Американо': 'Классический чёрный кофе',
+}
+
 def clean_desc(key):
-    # Manual descriptions for noisy items
-    MANUAL_DESC = {
-        'Smart_Sandwich_Bar__Black_Beef_Burger': 'Чёрная булочка бриош (выпекаем сами), авторский соус с лёгкой остринкой, говяжья котлета (только мясо и специи), сыр Чеддер, карамелизированный лук, свежий помидор, листья салата.',
-        'Smart_Sandwich_Bar__Burger_Combo_Burger_Fries_Sauce': 'Чёрный МАЧО бургер с говядиной, картофель фри с копчёной паприкой и соус на выбор: кетчуп, кетчуп с чили или айоли с французской горчицей (хенд мейд).',
-        # Drafts added 2026-08-02 for items with no i-food description
-        'Smart_Sandwich_Bar__Salami_Sandwich': 'Чиабатта (выпекаем сами), итальянская салями, свежий помидор, листья салата и соус на выбор. Разогревается в пресс-гриле до хрустящей корочки.',
-        'Smart_Sandwich_Bar__Bruschetta_with_Caramelized_Onion_and_Prosciutto': 'Хрустящий поджаренный хлеб, карамелизированный лук и нежный пршут.',
-        'Smart_Sandwich_Bar__Bruschetta_with_Cherry_Tomatoes_Olives_and_Salami': 'Хрустящий поджаренный хлеб с томатами черри, маслинами и салями.',
-        'Smart_Sandwich_Bar__Focaccia_with_Olives_and_Cheese': 'Домашняя фокачча (выпекаем сами) с маслинами и сыром. Целая фокачча — как закуска или основа для сэндвича.',
-        'Smart_Sandwich_Bar__French_Fries': 'Золотистый картофель фри (150 г). Подаётся с соусом на выбор: кетчуп, кетчуп с чили или айоли.',
-        'Smart_Sandwich_Bar__Caramelized_Onion': 'Сладкий томлёный лук — идеальная добавка к бургерам, гренкам и сэндвичам.',
-        'Smart_Sandwich_Bar__Aioli': 'Домашний соус айоли (хенд мейд) с французской горчицей — к бургерам, фри и гренкам.',
-        'Smart_Sandwich_Bar__Spicy_Ketchup': 'Кетчуп с чили — пикантная острота для бургеров, фри и гренок.',
-        'Smart_Sandwich_Bar__ketchup': 'Классический кетчуп — к бургерам, фри и гренкам.',
-    }
-    if key in MANUAL_DESC:
-        return MANUAL_DESC[key]
+    """i-food description (column C) — cleaned from menu_lang_texts only.
+    No manual overrides here: those live in column J ('Описание наше')."""
     raw = texts.get(key + '__description', {}).get('ru', '')
     if not raw:
         return ''
@@ -119,19 +123,20 @@ def clean_desc(key):
     raw = raw.strip(' ,.').strip()
     return raw[:220]
 
-# ---------- 2b. Read current sheet descriptions (preserve manual edits) ----------
-# The sheet is the source of truth for descriptions. i-food API supplies them,
-# but manual edits in the sheet must NOT be overwritten. So: if a row already
-# has a non-empty description, keep it; only fill empty ones from i-food.
-existing = {}
+# ---------- 2b. Read current sheet (preserve column J - 'ours' descriptions) ----------
+existing_j = {}
+existing_k = {}
 try:
-    cur = sheets('values/MENU!A2:C60?valueRenderOption=FORMATTED_VALUE')
+    cur = sheets('values/MENU!A2:K60?valueRenderOption=FORMATTED_VALUE')
     for row in cur.get('values', []):
         if len(row) >= 2:
-            existing[row[1].strip()] = (row[2] if len(row) > 2 else '').strip()
-    print(f'Read {len(existing)} existing sheet rows for description preservation')
+            existing_j[row[1].strip()] = (row[9] if len(row) > 9 else '').strip()
+            # K: checkbox -> TRUE/FALSE string, empty -> default TRUE
+            k = (row[10] if len(row) > 10 else '').strip()
+            existing_k[row[1].strip()] = k.lower() if k in ('true', 'false') else 'true'
+    print(f'Read {len(existing_j)} existing sheet rows (preserve J, K)')
 except Exception as e:
-    print(f'WARN: could not read existing descriptions ({e}); will write from API')
+    print(f'WARN: could not read existing J/K ({e})')
 
 rows = []
 skip = {'Smart_Sandwich_Bar__sandwich_test'}  # test item, no price/photo
@@ -148,40 +153,35 @@ for key, item in items_sorted:
     name = CLEAN_NAMES.get(key) or texts.get(key, {}).get('ru', key).split(' – ')[0].split(' — ')[0].strip()
     price_val = item.get('no_version_price') or item.get('version_price')
     price = f'{price_val:.2f} €'.replace('.', ',') if price_val else ''
-    desc = clean_desc(key)
-    # Preserve manual description already present in the sheet
-    if name in existing and existing[name]:
-        desc = existing[name]
+    desc_c = clean_desc(key)                      # C: i-food description (owned)
+    desc_j = existing_j.get(name, '')             # J: preserve user's 'ours'
     img = item.get('image', '')
     photo = IMG_BASE + urllib.parse.quote(img) if img else ''
-    rows.append([category, name, desc, price, '', 'Да', order, photo, ''])
+    visible = existing_k.get(name, 'true')  # K: preserve checkbox, default TRUE
+    rows.append([category, name, desc_c, price, '', 'Да', order, photo, '', desc_j, visible])
     order += 10
 
-# Drinks (not on i-food, keep from current sheet)
+# Drinks (not on i-food): C empty, J = existing or default
 drinks = [
-    ['Напитки', 'Лимонад', 'Домашний, 0.4 л', '2,80 €', '', 'Да', order, 'asset:lemonade', ''],
-    ['Напитки', 'Американо', 'Классический чёрный кофе', '2,00 €', '', 'Да', order + 10, 'asset:americano', ''],
+    ['Напитки', 'Лимонад', '', '2,80 €', '', 'Да', order, 'asset:lemonade', '', existing_j.get('Лимонад') or DRINK_DESC['Лимонад'], existing_k.get('Лимонад', 'true')],
+    ['Напитки', 'Американо', '', '2,00 €', '', 'Да', order + 10, 'asset:americano', '', existing_j.get('Американо') or DRINK_DESC['Американо'], existing_k.get('Американо', 'true')],
 ]
 rows.extend(drinks)
 
 print(f'Total rows: {len(rows)}')
 for r in rows:
-    print(f'  {r[0]:10} | {r[1][:45]:45} | {r[3]:8} | {r[7][:50]}')
+    print(f'  {r[0]:10} | {r[1][:45]:45} | C={r[2][:25]:25} | {r[3]:8} | J={r[9][:25]:25} | K={r[10]}')
 
-# ---------- 3. Write to sheet ----------
-# Preserve header row 1, replace rows 2..N
+# ---------- 3. Write to sheet (A..K) ----------
 n = len(rows)
-range_a = f'MENU!A2:F{n+1}'
-range_h = f'MENU!H2:I{n+1}'
-# A-F then H-I (skip G 'Порядок'? No — G holds order values, plain numbers, write A-I directly)
-range_all = f'MENU!A2:I{n+1}'
-values = [r[:9] for r in rows]  # A..I (9 cols)
+range_all = f'MENU!A2:K{n+1}'
+values = [r[:11] for r in rows]  # A..K (11 cols)
 sheets(f'values/{range_all}?valueInputOption=RAW', method='PUT',
        body={'range': range_all, 'majorDimension': 'ROWS', 'values': values})
 print(f'\nWritten {n} rows to {range_all}')
 
 # ---------- 4. Verify ----------
-check = sheets(f'values/MENU!A1:I{n+2}?valueRenderOption=FORMATTED_VALUE')
+check = sheets(f'values/MENU!A1:K{n+2}?valueRenderOption=FORMATTED_VALUE')
 print(f'\nVerify: {len(check.get("values", []))} rows read back')
-for r in check.get('values', [])[:5]:
-    print(' ', r[:6])
+for r in check.get('values', [])[:6]:
+    print(' ', r[:11])
