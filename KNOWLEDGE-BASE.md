@@ -102,4 +102,20 @@ python shot_pages.py 0 3
 
 # Текущий build id
 cat last-build.txt
+
+# Синк i-food → таблица (сохраняет J «Описание наше» и K «Показывать»)
+python sync_ifood_to_sheet.py
+
+# Разовые миграции структуры таблицы
+python migrate_desc_columns.py     # C -> «Описание i-food», J -> «Описание наше»
+python add_visibility_column.py    # K «Показывать» чекбоксы (TRUE/FALSE)
 ```
+
+**Структура MENU (актуально):**
+`A Категория | B Название | C Описание i-food | D Цена | E Старая цена | F В наличии | G Порядок | H Фото | I Бейдж | J Описание наше | K Показывать`
+
+- **C** — owned синком (пишется из API i-food, `menu_lang_texts`).
+- **J** — ручное «наше»; синк его НЕ затирает. Приоритет: J > C > legacy «Описание».
+- **K** — чекбокс: FALSE скрывает товар с экрана (Code.gs `continue`), пусто/TRUE = показывать. Синк сохраняет K по имени товара, новые строки = TRUE.
+
+**⚠️ Ловушка (Sheets API):** структурные операции — `POST spreadsheets/{id}:batchUpdate` (двоеточие!). Слэш-форма `/batchUpdate` возвращает HTML-страницу «не можем открыть файл» (400). Значения — `values:batchUpdate`.
