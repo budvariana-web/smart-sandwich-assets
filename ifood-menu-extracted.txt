@@ -1,0 +1,76 @@
+## Бургеры (4)
+### МАЧО БУРГЕР Черный Бургер со 100 % говядиной. — 7.5 EUR
+Только СЕГОДНЯ МАЧО БУРГЕР НА ЖЕЛТОЙ БУЛОЧКЕ . ВКУС НЕ МЕНЯЕТСЯ<br> <br>Чёрная булочка бриош (выпекаем сами), авторский соус с остринкой. Говяжья котлета (только мясо и специи и ничего больше) сыр Чеддер, карамелизирован
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/1. Черный Бургер_s.jpg
+### БЕЛЛА БУРГЕР — 6.5 EUR
+Розовая булочка бриош (мы выпекаем сами) ,  соус айоли (хенд мейд)  + французская горчица. Куриная котлета (только мясо и специи и ничего больше) ,сыр Чеддер, карамелизированный лук, свежий помидор, листья салата.
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/2. Розовый бургер_s.jpg
+### Сет "Белла Бургер" , картошка фри, соус на выбор — 9.0 EUR
+Бургер в розовой булочке Бриош с курицей 400 гр<br>, картошка фри 150 грамм и соус на выбор айоли, кетчуп, кетчуп с чили соусом
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/b29c93e435fd691963456d73d932cf36.png
+### Сет МАЧО БУРГЕР , картошка фри, соус на выбор — 10.0 EUR
+ТОЛЬКО СЕГОДНЯ МАЧО БУРГЕР НА ЖЕЛТОЙ  БУЛОЧКЕ<br>Сет включает в себя Черный МАЧО БУРГЕР с говядиной,  картошку фри приправленную копчёной паприкой и один соус на выбор, классический кетчуп, кетчуп с чили соусом или айоли
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/3. Сет бургер_s.jpg
+
+## Сендвичи (7)
+### Сэндвич тест
+### Сэндвич «Неаполитано» с Мортаделлой 350 грамм — 4.5 EUR
+Чиабатта (выпекаем сами), Песто соус, Итальянская Мортаделла, Моцарелла, , вяленые помидоры.<br>Перед подачей сендвич разогревается в пресс гриле до хрустящей корочки
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/4. Сендвич Неополитано_s.jpg
+### Сендвич " УКРАИНСКИЙ ВАЙБ" с бужениной запеченой с чесноком и специями. — 4.5 EUR
+Чиабатта (выпекаем сами), запечённая буженина (не жирная свинина) с чесноком и специями, маринованный огурчик, маринованный красный лук, айоли с французской горчицей, кетчуп, барбекю соус. По вашкму желанию можем добавит
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/5. Сендвич Укр вайб_s.jpg
+### Сендвич НЕАПОЛИТАНО ПЛЮС — 4.5 EUR
+Сендвич из тонкой фокаччи , и еще больше начинки.:)Фокачча приправленная пармезаном и итальянскими травами. Хрустящая корочка!! Начинка из Итальянской Мортаделла, соуса Песто, Моцареллы, вяленных помидор, базилика и свеж
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/8. Сендвич с мортаделлой_s.jpg
+### Сендвич с пршутом МОНТЕНЕГРО ЛАВ — 4.5 EUR
+Классический вкус Черногории. Негушский вяленный пршут, сыр эдамер, свежий огурец и соус на основе кетчупа, майонеза, горчицы и солёных огурчиков.
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/9. Сендвич с прштом_s.jpg
+### Сендвич с КУРИЦЕЙ ПО КАТАЛОНСКИ — 4.5 EUR
+Куриные бедрышки сначала маринуются в красном вине с добавлением каперсов и оливок, чеснока и лука. Запекается в духовке и нарезается. Подаётся на чиабатте или фокачче с соусом на основе оливок, со свежими помидорами <br
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/10_Сендвич_с_курицей_по_Каталонски_s.jpg
+### Сендвич с салями — 4.5 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/dbb4b14a88a7eec2f46cc77a1256f17d.jpg
+
+## Брускеты (2)
+### Брускетта с карамелизированным луком и пршутом — 2.5 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/12_Брускетта_с_карамелизированным_луком_и_прштом_s.jpg
+### Брускета с черри, маслинами и салями — 2.5 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/13_Брускета_с_черри,_маслинами_и_салями_s.jpg
+
+## Фокачча (1)
+### Фокачча с маслинами и сыром — 4.5 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/14. Фокачча целая_s.jpg
+
+## Закуски (4)
+### Аранчини — 4.2 EUR
+Аранчини это Сицилийский фаст фуд.<br>Рисовый шарик в сухарях обжаренный во фритюре с начинкой из мясного рагу, зелёного горошка и Моцареллы.<br>Вес каждого шарика 220 грамм.
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/15. Аранчини_s.jpg
+### Чесночные гренки из ржаной хлеба — 3.5 EUR
+Мы сами выпекаем черный ржаной хлеб с солодом. Готовим гренки во фритюре с добавлением чесночного конфи
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/16. чесночные гренки _s.jpg
+### Сет чесночные гренки + 3 соуса — 5.5 EUR
+К Чесночным гренки из ржаного хлеба мы добавили три соуса . Это айоли, карамелизировпнный лук и доя еще большей чесночный остроты соус Маринадо из оливкового масла, чеснока и зелени
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/17 Сет гренки и 3 соуса_s.jpg
+### Картофель фри 150 гр — 2.5 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/205941d9b48b20929ead4b69ac807903.jpg
+
+## Хлеб (1)
+### Чиабатта 160 -170 грамм — 1.5 EUR
+Чиабатта это итальянский хлеб , который мы випекаем сами и готовим с ним  <br>сендвичи.
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/487fa97c97c6155641b369d93b4c96e8.jpg
+
+## Дессерты (1)
+### Апельсиновый кекс ТАОРМИНА — 1.5 EUR
+В составе кекса только натуральные продукты. Апельсины, растительное масло,  яйца и мука.<br>Вкус Сицилии в каждом кусочке.
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/21, 22 Апельсиновый кекс_s.jpg
+
+## Соусы (4)
+### Карамелизированный лук — 1.0 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/23. Соус Карамелиз лук_s.jpg
+### Айоли — 1.0 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/24. Айоли_s.jpg
+### Острый кетчуп — 1.0 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/27. Острый кетчуп_s.jpg
+### Кетчуп — 1.0 EUR
+IMG: https://api.i-food.me/files/assets/img/ImagesPages/products/9c357408fea3609158dd7f1db5b84f9b.jpg
