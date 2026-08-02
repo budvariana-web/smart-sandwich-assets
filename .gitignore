@@ -1,0 +1,4 @@
+.clasprc.json
+.credentials/
+*.log
+__pycache__/

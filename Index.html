@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menu</title>
+  <style>
+    :root {
+      --bg: #0f1714;
+      --text: #fffdf6;
+      --muted: #8a9b8f;
+      --line: rgba(255,255,255,.1);
+      --accent: #f6cf55;
+      --danger: #ff7969;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg) url('https://raw.githubusercontent.com/budvariana-web/smart-sandwich-assets/main/assets/images/bg-photo.jpg') center/cover no-repeat;
+      color: var(--text);
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 20, 0.85);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .layout { position: relative; z-index: 1; }
+
+    /* === MAIN GRID: 3/4 products + 1/4 video === */
+    .layout {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      height: 100vh;
+      padding: 20px 30px;
+      gap: 20px;
+    }
+
+    /* === LEFT: PRODUCTS === */
+    .products-zone {
+      display: flex; flex-direction: column; min-width: 0;
+    }
+    header {
+      display: flex; align-items: end; justify-content: space-between;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 12px; flex-shrink: 0;
+    }
+    .brand {
+      letter-spacing: .15em; font-weight: 900;
+      font-size: 38px; text-transform: uppercase;
+    }
+    .subtitle {
+      margin-top: 4px; color: var(--muted);
+      font-size: 14px; letter-spacing: .06em;
+    }
+    .page-count {
+      font-size: 16px; color: var(--muted); text-align: right;
+    }
+
+    /* === CARDS GRID: 3 vertical cards === */
+    #menu {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      align-content: start;
+      padding-top: 16px;
+      min-height: 0;
+    }
+
+    /* === VERTICAL CARD: image top, info bottom === */
+    .card {
+      display: flex; flex-direction: column;
+      border-radius: 14px; overflow: hidden;
+      background: #1a2520;
+      border: 1px solid var(--line);
+      min-height: 0;
+    }
+
+    /* Image zone: top half, 2:1 ratio */
+    .card-img {
+      position: relative;
+      width: 100%;
+      padding-top: 60%;
+      overflow: hidden;
+      background: #111a16;
+    }
+    .card-img img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: contain;
+    }
+
+    /* Info zone: bottom half */
+    .card-info {
+      display: flex; flex-direction: column;
+      padding: 16px 18px 18px;
+      gap: 3px;
+      flex: 1;
+    }
+    .card-category {
+      color: var(--accent); font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .12em;
+    }
+    .card-name {
+      font-size: 26px; font-weight: 900; line-height: 1.15;
+    }
+    .card-badge {
+      display: inline-block; align-self: flex-start;
+      margin-top: 3px; padding: 3px 8px; border-radius: 6px;
+      background: var(--accent); color: #18211e;
+      font-size: 12px; font-weight: 900; text-transform: uppercase;
+    }
+    .card-desc {
+      color: var(--muted); font-size: 16px; line-height: 1.35;
+      margin-top: 3px;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-price-row {
+      display: flex; align-items: baseline; gap: 8px;
+      margin-top: auto; padding-top: 8px;
+    }
+    .card-price {
+      color: var(--accent); font-weight: 900; font-size: 32px;
+    }
+    .card-old-price {
+      color: var(--muted); font-size: 18px; text-decoration: line-through;
+    }
+
+    /* No-image placeholder */
+    .card-no-img {
+      width: 100%; padding-top: 60%;
+      background: linear-gradient(135deg, #1a2520, #243029);
+      position: relative;
+    }
+    .card-no-img::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,.02) 8px, rgba(255,255,255,.02) 16px);
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px dashed var(--line); border-radius: 16px;
+      color: var(--muted); font-size: 24px; text-align: center;
+      padding: 40px; min-height: 200px;
+    }
+
+    /* === RIGHT: VIDEO ZONE === */
+    .video-zone {
+      display: flex; flex-direction: column;
+      gap: 10px; min-height: 0;
+    }
+    .announcement {
+      flex: 1 1 0; min-height: 0;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(15, 23, 20, 0.55);
+      border: 1px solid var(--line);
+      color: #f5fbf7;
+      font-size: 24px; font-weight: 700;
+      line-height: 1.25;
+      overflow: hidden;
+      position: relative;
+    }
+    .announcement .ann-badge {
+      position: absolute; top: 8px; right: 10px;
+      font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+      color: rgba(255,255,255,.45);
+    }
+    .announcement strong { color: #ffd479; }
+    .video-slot {
+      position: relative; flex: 0 0 33%;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(15, 23, 20, 0.5);
+      border: 1px solid var(--line);
+      min-height: 0;
+    }
+    .video-zone.no-ann .video-slot { flex: 1 1 auto; }
+    .video-slot video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: contain;
+      background: rgba(0,0,0,0.3);
+      opacity: 0; transition: opacity .25s;
+    }
+    .video-slot video.active { opacity: 1; }
+    .video-placeholder {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      background: linear-gradient(180deg, rgba(20,31,27,0.6), rgba(10,15,13,0.5));
+    }
+    .video-placeholder svg {
+      opacity: .3; width: 48px; height: 48px;
+    }
+    .video-label {
+      color: var(--muted); font-size: 13px;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .video-counter {
+      position: absolute; bottom: 10px; left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,.4); font-size: 12px;
+      pointer-events: none;
+    }
+
+    /* Timer bar */
+    .timer-bar {
+      position: fixed; bottom: 0; left: 0;
+      height: 3px; background: var(--accent);
+      z-index: 100; transition: width linear;
+    }
+    footer {
+      display: flex; justify-content: space-between;
+      color: var(--muted); font-size: 12px;
+      flex-shrink: 0; padding-top: 8px;
+    }
+    .offline { color: var(--danger); font-weight: 700; opacity: 0; transition: opacity .3s; }
+    .offline.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="timer-bar" id="timer-bar"></div>
+  <div class="layout">
+    <div class="products-zone">
+      <header>
+        <div>
+          <div class="brand" id="brand">SMART SANDWICH BAR</div>
+          <div class="subtitle">АКТУАЛЬНОЕ МЕНЮ</div>
+        </div>
+        <div class="page-count" id="page-count"></div>
+      </header>
+      <section id="menu" aria-live="polite"></section>
+      <footer>
+        <span id="updated">Загрузка меню...</span>
+        <span class="offline" id="offline">НЕТ СВЯЗИ</span>
+      </footer>
+    </div>
+    <div class="video-zone" id="video-zone">
+      <div class="announcement" id="ann-top">
+        <span id="ann-top-text"></span>
+        <span class="ann-badge" id="ann-top-badge"></span>
+      </div>
+      <div class="video-slot" id="video-slot">
+        <div class="video-placeholder" id="video-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <div class="video-label">Промо-ролик</div>
+        </div>
+        <div class="video-counter" id="video-counter"></div>
+      </div>
+      <div class="announcement" id="ann-bottom">
+        <span id="ann-bottom-text"></span>
+        <span class="ann-badge" id="ann-bottom-badge"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var CACHE_KEY = 'sb-v3';
+    var BUILD_ID  = '%%BUILD_ID%%';
+    var CARDS_PER_PAGE = 3;
+    var state = {
+      data: null, pages: [], page: 0,
+      pageTimer: null, refreshTimer: null, videoTimer: null, annTimer: null,
+      videoIndex: 0
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    function escapeText(v) {
+      return String(v || '').replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];
+      });
+    }
+
+    /* === CARD RENDERING === */
+    function itemMarkup(item) {
+      var imageUrl = String(item.imageUrl || '');
+      var hasImage = imageUrl.indexOf('https://') === 0;
+
+      var imgHtml = hasImage
+        ? '<div class="card-img"><img src="' + escapeText(imageUrl) + '" alt="" loading="lazy"></div>'
+        : '<div class="card-no-img"></div>';
+
+      var badge = item.badge
+        ? '<span class="card-badge">' + escapeText(item.badge) + '</span>' : '';
+      var desc = item.description
+        ? '<div class="card-desc">' + escapeText(item.description) + '</div>' : '';
+      var oldP = item.oldPrice
+        ? '<span class="card-old-price">' + escapeText(item.oldPrice) + '</span>' : '';
+
+      return '<article class="card">' + imgHtml
+        + '<div class="card-info">'
+        + '<div class="card-category">' + escapeText(item.category) + '</div>'
+        + '<div class="card-name">' + escapeText(item.name) + '</div>'
+        + badge + desc
+        + '<div class="card-price-row"><span class="card-price">' + escapeText(item.price) + '</span>' + oldP + '</div>'
+        + '</div></article>';
+    }
+
+    /* === PAGINATION === */
+    function paginate(items) {
+      var pages = [];
+      for (var i = 0; i < items.length; i += CARDS_PER_PAGE)
+        pages.push(items.slice(i, i + CARDS_PER_PAGE));
+      return pages.length ? pages : [[]];
+    }
+
+    function renderPage() {
+      var items = state.pages[state.page] || [];
+      $('menu').innerHTML = items.length
+        ? items.map(itemMarkup).join('')
+        : '<div class="empty">Сейчас нет доступных позиций</div>';
+      $('page-count').textContent = state.pages.length > 1
+        ? (state.page + 1) + ' / ' + state.pages.length : '';
+    }
+
+    /* === PAGE TIMER === */
+    function schedulePages() {
+      clearInterval(state.pageTimer);
+      if (state.pages.length < 2) { $('timer-bar').style.width = '0'; return; }
+      var sec = (state.data && state.data.pageSeconds) || 15;
+      var bar = $('timer-bar');
+      bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
+      bar.style.transition = 'width ' + sec + 's linear'; bar.style.width = '0%';
+      state.pageTimer = setInterval(function() {
+        state.page = (state.page + 1) % state.pages.length;
+        renderPage();
+        bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
+        bar.style.transition = 'width ' + sec + 's linear'; bar.style.width = '0%';
+      }, sec * 1000);
+    }
+
+    /* === VIDEO (preloaded cache, instant switch) === */
+    var videoEls = {};     // url -> <video>
+    var videoOrder = [];   // ordered urls
+    var activeVideoUrl = '';
+
+    function ensureVideoElements(urls) {
+      var slot = $('video-slot');
+      var next = [];
+      for (var i = 0; i < urls.length; i++) if (urls[i]) next.push(urls[i]);
+      // Remove elements whose url is gone
+      for (var oldUrl in videoEls) {
+        if (next.indexOf(oldUrl) === -1) {
+          var oldEl = videoEls[oldUrl];
+          oldEl.pause();
+          oldEl.removeAttribute('src');
+          oldEl.load();
+          oldEl.parentNode.removeChild(oldEl);
+          delete videoEls[oldUrl];
+        }
+      }
+      // Create elements for new urls, preload in background
+      for (var j = 0; j < next.length; j++) {
+        var u = next[j];
+        if (videoEls[u]) continue;
+        var v = document.createElement('video');
+        v.muted = true; v.loop = true; v.playsInline = true;
+        v.preload = 'auto';
+        v.addEventListener('canplay', function() {
+          var ph = $('video-placeholder');
+          if (ph) ph.style.display = 'none';
+        });
+        v.src = u;
+        slot.appendChild(v);
+        videoEls[u] = v;
+        v.load();
+      }
+      videoOrder = next;
+    }
+
+    function playVideo(index) {
+      if (!videoOrder.length) return;
+      if (!videoOrder[index]) index = 0;
+      state.videoIndex = index;
+      var url = videoOrder[index];
+      var el = videoEls[url];
+      if (!el) return;
+      if (activeVideoUrl && activeVideoUrl !== url) {
+        var prev = videoEls[activeVideoUrl];
+        if (prev) { prev.pause(); prev.classList.remove('active'); }
+      }
+      activeVideoUrl = url;
+      el.classList.add('active');
+      el.play().catch(function() {});
+      $('video-counter').textContent = videoOrder.length > 1
+        ? (index + 1) + ' / ' + videoOrder.length : '';
+    }
+
+    function nextVideo() {
+      if (videoOrder.length < 1) return;
+      playVideo((state.videoIndex + 1) % videoOrder.length);
+    }
+
+    function scheduleVideo() {
+      clearInterval(state.videoTimer);
+      if (videoOrder.length < 2) return;
+      var sec = (state.data && state.data.videoSeconds) || 10;
+      state.videoTimer = setInterval(nextVideo, sec * 1000);
+    }
+
+    /* === ANNOUNCEMENTS (rotate top + bottom) === */
+    var annIndex = 0;
+
+    function renderAnnouncements() {
+      var anns = (state.data && state.data.announcements) || [];
+      var top = $('ann-top'), bottom = $('ann-bottom');
+      var zone = $('video-zone');
+      var tText = $('ann-top-text'), bText = $('ann-bottom-text');
+      var tBadge = $('ann-top-badge'), bBadge = $('ann-bottom-badge');
+      if (!anns.length) {
+        zone.classList.add('no-ann');
+        top.style.display = 'none';
+        bottom.style.display = 'none';
+        return;
+      }
+      zone.classList.remove('no-ann');
+      top.style.display = '';
+      bottom.style.display = '';
+      var topIdx = annIndex % anns.length;
+      var bottomIdx = (annIndex + 1) % anns.length;
+      tText.textContent = anns[topIdx];
+      bText.textContent = anns.length > 1 ? anns[bottomIdx] : '';
+      bottom.style.display = anns.length > 1 ? '' : 'none';
+      tBadge.textContent = anns.length > 1 ? 'Акция ' + (topIdx + 1) + ' / ' + anns.length : '';
+      bBadge.textContent = anns.length > 1 ? 'Акция ' + (bottomIdx + 1) + ' / ' + anns.length : '';
+    }
+
+    function scheduleAnnouncements() {
+      clearInterval(state.annTimer);
+      var anns = (state.data && state.data.announcements) || [];
+      if (anns.length < 2) return;
+      var sec = (state.data && state.data.announcementSeconds) || 8;
+      state.annTimer = setInterval(function() {
+        annIndex++;
+        renderAnnouncements();
+      }, sec * 1000);
+    }
+
+    /* === APPLY DATA === */
+    function applyMenu(data, cached) {
+      if (!data || !Array.isArray(data.items)) {
+        $('updated').textContent = '\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438';
+        return;
+      }
+      state.data = data;
+      state.pages = paginate(data.items);
+      state.page = 0;
+      $('brand').textContent = data.brand || 'SMART SANDWICH BAR';
+      $('updated').textContent = cached
+        ? '\u041f\u043e\u043a\u0430\u0437\u0430\u043d\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u0430\u044f \u0432\u0435\u0440\u0441\u0438\u044f'
+        : '\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u043e ' + new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+      $('offline').classList.toggle('visible', Boolean(cached));
+
+      renderPage();
+      schedulePages();
+      scheduleRefresh();
+
+      /* Video: ensure cached elements, then play */
+      var urls = data.videoUrls || [];
+      ensureVideoElements(urls);
+      if (videoOrder.length > 0) {
+        playVideo(state.videoIndex >= videoOrder.length ? 0 : state.videoIndex);
+        scheduleVideo();
+      }
+
+      /* Announcements */
+      renderAnnouncements();
+      scheduleAnnouncements();
+
+      if (!cached) localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    }
+
+    /* === CACHE === */
+    function showCached() {
+      try {
+        var c = JSON.parse(localStorage.getItem(CACHE_KEY));
+        if (c) applyMenu(c, true);
+      } catch(_) {}
+    }
+
+    /* === LOAD === */
+    var loadRetries = 0;
+    var MAX_RETRIES = 3;
+
+    var API_BASE = 'https://script.google.com/macros/s/AKfycbxlyDvP-_TbVVXGXG7_rxKdXvowJxPu8gn8BXpLKuGnfsCmpHL71CXIWSVUbbamwY4skg/exec';
+
+    function loadMenu() {
+      var url = API_BASE + '?page=data';
+      fetch(url)
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function(d) {
+          loadRetries = 0;
+          applyMenu(d, false);
+        })
+        .catch(function() {
+          loadRetries++;
+          if (loadRetries < MAX_RETRIES) {
+            setTimeout(loadMenu, 3000);
+          } else {
+            loadRetries = 0;
+            showCached();
+          }
+        });
+    }
+
+    function scheduleRefresh() {
+      clearInterval(state.refreshTimer);
+      var interval = Math.max(20, (state.data && state.data.refreshSeconds) || 60) * 1000;
+      state.refreshTimer = setInterval(loadMenu, interval);
+    }
+
+    /* === CLICK video to skip === */
+    $('video-slot').addEventListener('click', function() {
+      if (videoOrder.length > 1) {
+        clearInterval(state.videoTimer);
+        nextVideo();
+        scheduleVideo();
+      }
+    });
+
+    /* === START === */
+    loadMenu();
+    window.setTimeout(scheduleRefresh, 500);
+  </script>
+</body>
+</html>
