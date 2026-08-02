@@ -119,6 +119,10 @@ function readMenuItems_() {
     headers.forEach(function(h, c) { if (h) obj[h] = row[c]; });
     var name = normalize_(obj['название'] || obj['name'] || '');
     if (!name) continue;
+    // Visibility checkbox (K 'Показывать'): explicitly FALSE hides the item.
+    // Empty or TRUE shows it (backward compatible with pre-checkbox rows).
+    var showRaw = obj['показывать'] || obj['show'] || obj['отображать'] || '';
+    if (showRaw === false || String(showRaw).toLowerCase() === 'false') continue;
     // Description precedence: 'Описание наше' (J) wins, else 'Описание i-food' (C),
     // else legacy 'Описание' (pre-split sheets).
     var descOurs = normalize_(obj['описание наше'] || obj['наше описание'] || obj['описание своё'] || '');
