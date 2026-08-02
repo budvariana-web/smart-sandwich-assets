@@ -18,11 +18,13 @@ const CONFIG = Object.freeze({
 });
 
 /**
- * Resolve display language: 'me' (crnogorski) or 'ru' (default).
- * Priority: URL param ?lang=me > SETTINGS 'Язык' > DEFAULT_LANG.
+ * Resolve display language: 'me' (crnogorski), 'ru' (default) or 'both' (merged:
+ * 3 RU dishes, then the same 3 ME dishes, alternating).
+ * Priority: URL param ?lang=... > SETTINGS 'Язык' > DEFAULT_LANG.
  */
 function resolveLang_(e) {
   var urlLang = (e && e.parameter && e.parameter.lang) ? String(e.parameter.lang).toLowerCase() : '';
+  if (urlLang === 'both' || urlLang === 'mix' || urlLang === 'mixed' || urlLang === 'ru-me' || urlLang === 'me-ru' || urlLang === 'bi' || urlLang === 'bilingual') return 'both';
   if (urlLang === 'me' || urlLang === 'sr' || urlLang === 'cnr' || urlLang === 'cg') return 'me';
   if (urlLang === 'ru' || urlLang === 'rus') return 'ru';
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -33,6 +35,7 @@ function resolveLang_(e) {
       var key = normalize_(String(sd[r][0])).toLowerCase();
       if (key === 'язык' || key === 'lang' || key === 'language') {
         var val = normalize_(String(sd[r][1])).toLowerCase();
+        if (val === 'both' || val === 'mix' || val === 'mixed' || val === 'ru-me' || val === 'me-ru') return 'both';
         if (val.indexOf('me') === 0 || val === 'cnr' || val === 'cg') return 'me';
         if (val === 'ru' || val === 'rus') return 'ru';
       }
@@ -135,15 +138,9 @@ function parseVideoUrls_(val) {
     });
 }
 
-function readMenuItems_(lang) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var isMe = (lang === 'me');
-  var sheetName = isMe ? CONFIG.MENU_SHEET_ME : CONFIG.MENU_SHEET_NAME;
-  var menuSheet = ss.getSheetByName(sheetName) || ss.getSheetByName(CONFIG.MENU_SHEET_NAME);
-  if (!menuSheet) return { items: [], brand: CONFIG.DEFAULT_BRAND, lang: lang };
-  var settingsSheet = ss.getSheetByName('SETTINGS');
+function readItemsFromSheet_(menuSheet) {
   var data = menuSheet.getDataRange().getValues();
-  if (data.length < 2) return { items: [], brand: CONFIG.DEFAULT_BRAND };
+  if (data.length < 2) return [];
   var headers = data[0].map(function(h) { return normalize_(String(h)).toLowerCase(); });
   var items = [];
   for (var r = 1; r < data.length; r++) {
@@ -167,8 +164,51 @@ function readMenuItems_(lang) {
       oldPrice: normalize_(obj['старая цена'] || obj['old price'] || ''),
       description: descOurs || descIfood,
       badge: normalize_(obj['бейдж'] || obj['badge'] || ''),
+      orderKey: normalize_(obj['порядок'] || obj['order'] || obj['sort'] || ''),
       imageUrl: safeImageUrl_(obj['фото'] || obj['photo'] || obj['image'] || '') || (FALLBACK_IMAGES[name] ? CONFIG.GITHUB_ASSETS_BASE + 'images/' + FALLBACK_IMAGES[name] : '')
     });
+  }
+  return items;
+}
+
+function readMenuItems_(lang) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var settingsSheet = ss.getSheetByName('SETTINGS');
+  var items = [];
+  var sourceName = '';
+  if (lang === 'both') {
+    // Merged mode: 3 RU dishes, then the SAME 3 ME dishes, then next 3 RU, etc.
+    var ruSheet = ss.getSheetByName(CONFIG.MENU_SHEET_NAME);
+    var meSheet = ss.getSheetByName(CONFIG.MENU_SHEET_ME);
+    var ruItems = ruSheet ? readItemsFromSheet_(ruSheet) : [];
+    var meItems = meSheet ? readItemsFromSheet_(meSheet) : [];
+    // Pair by order key (same dish in both languages), fallback to index.
+    var meByKey = {};
+    meItems.forEach(function(m, idx) { if (m.orderKey) meByKey[m.orderKey] = m; else meByKey['idx' + idx] = m; });
+    var CHUNK = 3;
+    for (var i = 0; i < ruItems.length; i += CHUNK) {
+      for (var j = i; j < Math.min(i + CHUNK, ruItems.length); j++) items.push(ruItems[j]);
+      for (var j2 = i; j2 < Math.min(i + CHUNK, ruItems.length); j2++) {
+        var meItem = (ruItems[j2].orderKey && meByKey[ruItems[j2].orderKey]) ? meByKey[ruItems[j2].orderKey] : meItems[j2];
+        if (meItem) items.push(meItem);
+      }
+    }
+    // Any ME items without a RU counterpart at the end
+    for (var k = 0; k < meItems.length; k++) {
+      var isPaired = false;
+      for (var p = 0; p < ruItems.length && !isPaired; p++) {
+        if (ruItems[p].orderKey && meItems[k].orderKey && ruItems[p].orderKey === meItems[k].orderKey) isPaired = true;
+        if (!ruItems[p].orderKey && !meItems[k].orderKey && p === k) isPaired = true;
+      }
+      if (!isPaired) items.push(meItems[k]);
+    }
+    sourceName = (ruSheet ? ruSheet.getName() : '') + ' + ' + (meSheet ? meSheet.getName() : '');
+  } else {
+    var sheetName = (lang === 'me') ? CONFIG.MENU_SHEET_ME : CONFIG.MENU_SHEET_NAME;
+    var menuSheet = ss.getSheetByName(sheetName) || ss.getSheetByName(CONFIG.MENU_SHEET_NAME);
+    if (!menuSheet) return { items: [], brand: CONFIG.DEFAULT_BRAND, lang: lang };
+    items = readItemsFromSheet_(menuSheet);
+    sourceName = menuSheet.getName();
   }
   var brand = CONFIG.DEFAULT_BRAND;
   var refreshSec = CONFIG.DEFAULT_REFRESH_SECONDS;
@@ -199,9 +239,9 @@ function readMenuItems_(lang) {
   return {
     items: items, brand: brand,
     refreshSeconds: refreshSec, pageSeconds: pageSec, videoSeconds: videoSec,
-    announcements: readAnnouncements_(lang), announcementSeconds: annSec,
+    announcements: readAnnouncements_(lang === 'both' ? 'ru' : lang), announcementSeconds: annSec,
     videoUrls: videoUrls, buildId: CONFIG.BUILD_ID,
-    sourceSheet: menuSheet.getName(), lang: lang
+    sourceSheet: sourceName, lang: lang
   };
 }
 

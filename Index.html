@@ -333,7 +333,7 @@
   </div>
 
   <script>
-    var CACHE_KEY = 'sb-v3' + (window.MENU_LANG === 'me' ? '-me' : '-ru');
+    var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
     var BUILD_ID  = '%%BUILD_ID%%';
     var CARDS_PER_PAGE = 3;
 
@@ -348,6 +348,11 @@
         subtitle: 'AKTUELNI MENI', offline: 'NEMA VEZE', loading: 'Učitavanje menija...',
         video: 'Promo video', empty: 'Trenutno nema dostupnih stavki', akcija: 'Akcija',
         error: 'Greška pri učitavanju', cached: 'Prikazana sačuvana verzija', updated: 'Ažurirano'
+      },
+      both: {
+        subtitle: 'АКТУАЛЬНОЕ МЕНЮ · AKTUELNI MENI', offline: 'НЕТ СВЯЗИ', loading: 'Загрузка меню...',
+        video: 'Промо-ролик', empty: 'Сейчас нет доступных позиций', akcija: 'Акция',
+        error: 'Ошибка загрузки', cached: 'Показана сохранённая версия', updated: 'Обновлено'
       }
     };
     var T = I18N[window.MENU_LANG] || I18N.ru;
@@ -586,7 +591,7 @@
     var API_BASE = 'https://script.google.com/macros/s/AKfycbxlyDvP-_TbVVXGXG7_rxKdXvowJxPu8gn8BXpLKuGnfsCmpHL71CXIWSVUbbamwY4skg/exec';
 
     function loadMenu() {
-      var url = API_BASE + '?page=data' + (window.MENU_LANG === 'me' ? '&lang=me' : '');
+      var url = API_BASE + '?page=data' + ((window.MENU_LANG === 'me' || window.MENU_LANG === 'both') ? '&lang=' + window.MENU_LANG : '');
       fetch(url)
         .then(function(r) {
           if (!r.ok) throw new Error('HTTP ' + r.status);
