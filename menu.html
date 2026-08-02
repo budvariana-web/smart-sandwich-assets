@@ -19,6 +19,11 @@
   </style>
 </head>
 <body>
-  <iframe src="https://script.google.com/macros/s/AKfycbxlyDvP-_TbVVXGXG7_rxKdXvowJxPu8gn8BXpLKuGnfsCmpHL71CXIWSVUbbamwY4skg/exec?v=52" allow="autoplay"></iframe>
+  <iframe id="frame" src="" allow="autoplay"></iframe>
+  <script>
+    // Single TV URL, never changes. Cache-buster appended automatically on every load.
+    var API = 'https://script.google.com/macros/s/AKfycbxlyDvP-_TbVVXGXG7_rxKdXvowJxPu8gn8BXpLKuGnfsCmpHL71CXIWSVUbbamwY4skg/exec';
+    document.getElementById('frame').src = API + '?v=' + Date.now();
+  </script>
 </body>
 </html>
