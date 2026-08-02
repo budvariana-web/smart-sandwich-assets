@@ -94,6 +94,12 @@ cd /c/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar
 python deploy.py "описание"
 python verify_menu.py
 
+# Замер выравнивания карточек (категория сверху, цена снизу, низ правой колонки)
+python measure_alignment.py   # с BUILD_ID-гардом против стейл-прокси
+
+# Скриншоты страниц: 0 = первая (бургеры), 3 = сэндвич с салями + брускетты
+python shot_pages.py 0 3
+
 # Текущий build id
 cat last-build.txt
 ```
