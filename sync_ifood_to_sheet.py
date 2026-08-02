@@ -119,6 +119,20 @@ def clean_desc(key):
     raw = raw.strip(' ,.').strip()
     return raw[:220]
 
+# ---------- 2b. Read current sheet descriptions (preserve manual edits) ----------
+# The sheet is the source of truth for descriptions. i-food API supplies them,
+# but manual edits in the sheet must NOT be overwritten. So: if a row already
+# has a non-empty description, keep it; only fill empty ones from i-food.
+existing = {}
+try:
+    cur = sheets('values/MENU!A2:C60?valueRenderOption=FORMATTED_VALUE')
+    for row in cur.get('values', []):
+        if len(row) >= 2:
+            existing[row[1].strip()] = (row[2] if len(row) > 2 else '').strip()
+    print(f'Read {len(existing)} existing sheet rows for description preservation')
+except Exception as e:
+    print(f'WARN: could not read existing descriptions ({e}); will write from API')
+
 rows = []
 skip = {'Smart_Sandwich_Bar__sandwich_test'}  # test item, no price/photo
 order = 10
@@ -135,6 +149,9 @@ for key, item in items_sorted:
     price_val = item.get('no_version_price') or item.get('version_price')
     price = f'{price_val:.2f} €'.replace('.', ',') if price_val else ''
     desc = clean_desc(key)
+    # Preserve manual description already present in the sheet
+    if name in existing and existing[name]:
+        desc = existing[name]
     img = item.get('image', '')
     photo = IMG_BASE + urllib.parse.quote(img) if img else ''
     rows.append([category, name, desc, price, '', 'Да', order, photo, ''])
