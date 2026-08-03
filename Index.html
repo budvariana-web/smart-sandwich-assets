@@ -285,6 +285,16 @@
       height: 3px; background: var(--accent);
       z-index: 100; transition: width linear;
     }
+
+    /* Fullscreen video page (between RU/ME cycles) */
+    .fullscreen-video {
+      position: fixed; inset: 0; z-index: 999;
+      background: #000; display: none; align-items: center; justify-content: center;
+    }
+    .fullscreen-video.active { display: flex; }
+    .fullscreen-video video {
+      width: 100%; height: 100%; object-fit: cover;
+    }
     footer {
       display: flex; justify-content: space-between;
       color: var(--muted); font-size: 12px;
@@ -330,6 +340,10 @@
         <span class="ann-badge" id="ann-bottom-badge"></span>
       </div>
     </div>
+  </div>
+
+  <div class="fullscreen-video" id="fullscreen-video">
+    <video id="fullscreen-video-el" muted playsinline loop preload="auto"></video>
   </div>
 
   <script>
@@ -410,8 +424,24 @@
       return pages.length ? pages : [[]];
     }
 
+    /* In both mode, pages alternate: RU trio, ME trio, RU trio, ME trio...
+       Insert a fullscreen video page after every pair (RU+ME) => after odd indices. */
+    function interleaveVideoPages(pages, videoUrls) {
+      var out = [];
+      for (var i = 0; i < pages.length; i++) {
+        out.push(pages[i]);
+        if (i % 2 === 1) {
+          out.push({ video: videoUrls[Math.floor(i / 2) % videoUrls.length] });
+        }
+      }
+      return out;
+    }
+
     function renderPage() {
-      var items = state.pages[state.page] || [];
+      var pg = state.pages[state.page];
+      if (pg && pg.video) { renderVideoPage(pg.video); return; }
+      hideVideoPage();
+      var items = Array.isArray(pg) ? pg : [];
       $('menu').innerHTML = items.length
         ? items.map(itemMarkup).join('')
         : '<div class="empty">' + T.empty + '</div>';
@@ -419,20 +449,53 @@
         ? (state.page + 1) + ' / ' + state.pages.length : '';
     }
 
+    /* === FULLSCREEN VIDEO PAGES (between RU/ME cycles) === */
+    var fullscreenVideoEl = $('fullscreen-video-el');
+    var fullscreenVideoWrap = $('fullscreen-video');
+
+    function renderVideoPage(url) {
+      fullscreenVideoWrap.classList.add('active');
+      if (fullscreenVideoEl.dataset.src !== url) {
+        fullscreenVideoEl.dataset.src = url;
+        fullscreenVideoEl.src = url;
+        fullscreenVideoEl.load();
+      }
+      var p = fullscreenVideoEl.play();
+      if (p && p.catch) p.catch(function() {});
+      $('page-count').textContent = state.pages.length > 1
+        ? (state.page + 1) + ' / ' + state.pages.length : '';
+    }
+
+    function hideVideoPage() {
+      fullscreenVideoWrap.classList.remove('active');
+      fullscreenVideoEl.pause();
+    }
+
     /* === PAGE TIMER === */
     function schedulePages() {
-      clearInterval(state.pageTimer);
+      clearTimeout(state.pageTimer);
       if (state.pages.length < 2) { $('timer-bar').style.width = '0'; return; }
-      var sec = (state.data && state.data.pageSeconds) || 15;
       var bar = $('timer-bar');
+      armPageTimer(bar);
+    }
+
+    function armPageTimer(bar) {
+      clearTimeout(state.pageTimer);
       bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
+      var sec = pageDurationSec();
       bar.style.transition = 'width ' + sec + 's linear'; bar.style.width = '0%';
-      state.pageTimer = setInterval(function() {
+      state.pageTimer = setTimeout(function() {
+        hideVideoPage();
         state.page = (state.page + 1) % state.pages.length;
         renderPage();
-        bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
-        bar.style.transition = 'width ' + sec + 's linear'; bar.style.width = '0%';
+        armPageTimer(bar);
       }, sec * 1000);
+    }
+
+    function pageDurationSec() {
+      var pg = state.pages[state.page];
+      if (pg && pg.video) return Math.max(10, (state.data && state.data.videoSeconds) || 40);
+      return Math.max(8, (state.data && state.data.pageSeconds) || 15);
     }
 
     /* === VIDEO (preloaded cache, instant switch) === */
@@ -550,6 +613,10 @@
       }
       state.data = data;
       state.pages = paginate(data.items);
+      /* In both mode: interleave fullscreen video pages after each RU+ME pair */
+      if (window.MENU_LANG === 'both' && data.videoUrls && data.videoUrls.length) {
+        state.pages = interleaveVideoPages(state.pages, data.videoUrls);
+      }
       state.page = 0;
       $('brand').textContent = data.brand || 'SMART SANDWICH BAR';
       $('updated').textContent = cached
