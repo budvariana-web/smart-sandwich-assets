@@ -293,7 +293,8 @@
     }
     .fullscreen-video.active { display: flex; }
     .fullscreen-video video {
-      width: 100%; height: 100%; object-fit: cover;
+      width: 100%; height: 100%; object-fit: contain;
+      background: #000;
     }
     footer {
       display: flex; justify-content: space-between;
@@ -348,7 +349,7 @@
 
   <script>
     var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260803-183531';
+    var BUILD_ID  = 'gh-pages-20260803-191450';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
