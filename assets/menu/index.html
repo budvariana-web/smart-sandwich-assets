@@ -348,7 +348,7 @@
 
   <script>
     var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260803-180123';
+    var BUILD_ID  = 'gh-pages-20260803-183531';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
@@ -446,6 +446,7 @@
     function renderPage() {
       var pg = state.pages[state.page];
       if (pg && pg.video) { renderVideoPage(pg.video); return; }
+      state._videoPageShown = -1;
       hideVideoPage();
       var items = Array.isArray(pg) ? pg : [];
       $('menu').innerHTML = items.length
@@ -461,15 +462,19 @@
 
     function renderVideoPage(url) {
       fullscreenVideoWrap.classList.add('active');
+      /* Restart only when ENTERING this video page (first show, re-show after
+         a menu page, or a different clip) — NOT on a data refresh while the
+         same clip keeps playing, otherwise videos visibly repeat. */
+      var entering = state._videoPageShown !== state.page
+        || fullscreenVideoEl.dataset.src !== url;
+      state._videoPageShown = state.page;
       if (fullscreenVideoEl.dataset.src !== url) {
         fullscreenVideoEl.dataset.src = url;
         fullscreenVideoEl.src = url;
         fullscreenVideoEl.load();
         state._videoDurSec = 0;
       }
-      /* Restart the clip only when it isn't already playing (first show,
-         re-show after its end); during a data refresh it keeps playing. */
-      if (fullscreenVideoEl.paused || fullscreenVideoEl.ended) {
+      if (entering) {
         try { fullscreenVideoEl.currentTime = 0; } catch(_) {}
       }
       var p = fullscreenVideoEl.play();
@@ -485,6 +490,9 @@
 
     /* === PAGE TIMER === */
     function schedulePages() {
+      /* Keep a running timer across data refreshes (applyMenu calls this every
+         refreshSeconds) — resetting it makes pages linger 15–30 s unpredictably. */
+      if (state.pageTimer) return;
       clearTimeout(state.pageTimer);
       if (state.pages.length < 2) { $('timer-bar').style.width = '0'; return; }
       var bar = $('timer-bar');
@@ -494,9 +502,15 @@
     function armPageTimer(bar) {
       clearTimeout(state.pageTimer);
       bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
+      var pg = state.pages[state.page];
       var sec = pageDurationSec();
       bar.style.transition = 'width ' + sec + 's linear'; bar.style.width = '0%';
-      state.pageTimer = setTimeout(advancePage, sec * 1000);
+      /* Video pages: the clip's 'ended' event is the primary advance trigger;
+         the timer is a FAILSAFE (duration + 15 s) in case the clip stalls or
+         never fires 'ended'. This way the page stays on the video until it
+         actually finishes, even on a slow/stalling TV. */
+      var fire = (pg && pg.video) ? sec + 15 : sec;
+      state.pageTimer = setTimeout(advancePage, fire * 1000);
     }
 
     /* Advance to the next page. Debounced: a clip 'ended' event arriving at
