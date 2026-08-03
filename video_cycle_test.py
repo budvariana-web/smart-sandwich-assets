@@ -87,11 +87,13 @@ def main():
         t0 = time.time()
         video_active = False
         first_count = ""
+        total_pages = 0
         while time.time() - t0 < 90:
             try:
                 act = frame.evaluate("() => document.getElementById('fullscreen-video').classList.contains('active')")
                 if act:
                     first_count = frame.evaluate("() => document.getElementById('page-count').textContent")
+                    total_pages = frame.evaluate("() => window.state ? state.pages.length : 0")
                     video_active = True
                     break
             except Exception:
@@ -101,7 +103,8 @@ def main():
             print("[test] FAIL: video page never appeared (90s)")
             browser.close()
             return 1
-        print(f"[test] video page active, page-count='{first_count}'")
+        first_num = int(first_count.split(' / ')[0]) if first_count else 0
+        print(f"[test] video page active, page-count='{first_count}' total={total_pages}")
 
         info = frame.evaluate("""() => {
             var v = document.getElementById('fullscreen-video-el');
@@ -130,13 +133,17 @@ def main():
             page.wait_for_timeout(1000)
         held = time.time() - t_video_start
         print(f"[test] video page held {held:.1f}s (clip duration {info['duration']:.1f}s)")
-        if not (info["duration"] - 3 <= held <= info["duration"] + 12):
-            print(f"[test] WARN: held time deviates from clip duration (>12s or <3s)")
+        if abs(held - info["duration"]) <= 3:
+            print("[test] OK: advanced via 'ended' at clip end")
+        elif info["duration"] + 12 <= held <= info["duration"] + 20:
+            print("[test] OK: failsafe timer fired (clip stalled; page waited up to +15s)")
+        else:
+            print("[test] WARN: held time deviates from clip duration")
 
         page.wait_for_timeout(2000)
         after = frame.evaluate("() => document.getElementById('page-count').textContent")
         print(f"[test] after video page-count='{after}'")
-        if after.strip() == "1 / 25":
+        if after.strip() == f"1 / {total_pages}":
             print("[test] FAIL: reset to first page after video")
             browser.close()
             return 1
@@ -145,7 +152,7 @@ def main():
         page.wait_for_timeout(65000)
         later = frame.evaluate("() => document.getElementById('page-count').textContent")
         print(f"[test] ~75s in page-count='{later}'")
-        if later.strip() == "1 / 25":
+        if later.strip() == f"1 / {total_pages}":
             print("[test] FAIL: data refresh reset to first page")
             browser.close()
             return 1
