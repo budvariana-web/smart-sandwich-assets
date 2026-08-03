@@ -425,15 +425,21 @@
     }
 
     /* In both mode, pages alternate: RU trio, ME trio, RU trio, ME trio...
-       Insert a fullscreen video page after every pair (RU+ME) => after odd indices. */
+       Insert a fullscreen video page after each RU+ME pair (odd page indices),
+       assigning each video EXACTLY ONCE per cycle (no repeats). If there are
+       more videos than pairs, remaining videos play as fullscreen pages at the
+       end of the cycle. If fewer videos than pairs, the last pairs continue
+       without a video pause. */
     function interleaveVideoPages(pages, videoUrls) {
       var out = [];
+      var vi = 0;
       for (var i = 0; i < pages.length; i++) {
         out.push(pages[i]);
-        if (i % 2 === 1) {
-          out.push({ video: videoUrls[Math.floor(i / 2) % videoUrls.length] });
+        if (i % 2 === 1 && vi < videoUrls.length) {
+          out.push({ video: videoUrls[vi++] });
         }
       }
+      while (vi < videoUrls.length) out.push({ video: videoUrls[vi++] });
       return out;
     }
 
@@ -561,11 +567,15 @@
         var u = next[j];
         if (videoEls[u]) continue;
         var v = document.createElement('video');
-        v.muted = true; v.loop = true; v.playsInline = true;
+        v.muted = true; v.loop = false; v.playsInline = true;
         v.preload = 'auto';
         v.addEventListener('canplay', function() {
           var ph = $('video-placeholder');
           if (ph) ph.style.display = 'none';
+        });
+        /* No looping: when a promo clip ends, switch to the next one. */
+        v.addEventListener('ended', function() {
+          if (videoOrder.length > 1) nextVideo();
         });
         v.src = u;
         slot.appendChild(v);
