@@ -75,10 +75,10 @@
     .layout {
       display: grid;
       grid-template-columns: 3fr 1fr;
-      /* calc(100vh - 70px) + margin: keeps content clear of TV browser
-         panels/address bars that overlay the bottom of the screen */
-      height: calc(100vh - 70px);
-      margin: 35px 30px;
+      /* calc(100vh - 85px) + 50px bottom margin: keeps content clear of TV
+         browser panels/address bars and overscan/zoom crop at the bottom */
+      height: calc(100vh - 85px);
+      margin: 35px 30px 50px;
       padding: 20px 30px;
       gap: 20px;
     }
@@ -86,19 +86,28 @@
     /* === LEFT: PRODUCTS === */
     .products-zone {
       display: flex; flex-direction: column; min-width: 0;
+      min-height: 0;   /* grid item: don't force the row taller than the viewport */
     }
     header {
       display: flex; align-items: end; justify-content: space-between;
       border-bottom: 2px solid var(--accent);
       padding-bottom: 12px; flex-shrink: 0;
     }
+    header > div:first-child { min-width: 0; }
     .brand {
-      letter-spacing: .15em; font-weight: 900;
-      font-size: 38px; text-transform: uppercase;
+      letter-spacing: .1em; font-weight: 900;
+      font-size: 32px; text-transform: uppercase;
+      /* Glock Grotesque is very wide: at 38px + .15em it wrapped to 2 lines
+         on 720p TV viewports (~1280 CSS px) and bloated the header to ~130px,
+         starving the cards. 32px/.1em fits even ~750px-wide columns.
+         nowrap+ellipsis is a safety net for very narrow viewports. */
+      line-height: 1.1;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .subtitle {
       margin-top: 4px; color: var(--muted);
       font-size: 14px; letter-spacing: .06em;
+      line-height: 1.3;
     }
     .page-count {
       font-size: 16px; color: var(--muted); text-align: right;
@@ -163,6 +172,11 @@
       font-size: 24px; font-weight: 900; line-height: 1.3;
       padding: 2px 0;
       flex-shrink: 0;
+      /* Cap long names (e.g. "Сет МАЧО БУРГЕР: бургер, фри, соус") at 2 lines
+         so the description + price always fit inside the card (Chromium
+         -webkit-line-clamp in flex shrinks here, unlike on .card-desc) */
+      display: -webkit-box; -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2; overflow: hidden;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
@@ -171,16 +185,19 @@
       font-size: 14px; font-weight: 900; text-transform: uppercase;
       flex-shrink: 0;
     }
-    .card-desc {
-      color: var(--muted); font-size: 13px; line-height: 1.45;
-      margin-top: 0;
+    .card-desc-wrap {
+      /* Plain flex item (NOT -webkit-box): shrinks reliably when the card is
+         short, unlike display:-webkit-box + line-clamp which keeps its content
+         height in Chromium and pushes the price row out of the card. */
       flex: 1 1 auto;   /* grows: keeps price pinned to card bottom */
       min-height: 0;
       overflow: hidden;
-      /* 14 lines = fits the tightest card (3-line name) with ~4px spare;
-         current longest description is 6 lines. Raised from 6 so longer
-         descriptions (edited in the sheet) still render fully. */
-      display: -webkit-box; -webkit-line-clamp: 14; -webkit-box-orient: vertical;
+      display: flex; flex-direction: column;
+    }
+    .card-desc {
+      color: var(--muted); font-size: 13px; line-height: 1.45;
+      display: -webkit-box; -webkit-box-orient: vertical;
+      -webkit-line-clamp: 14; overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
@@ -302,7 +319,12 @@
     .fullscreen-video video {
       width: 100%; height: 100%; object-fit: contain;
       background: #000;
+      /* Hide until the first frame is actually rendered (same trick as the
+         mini video-slot): otherwise the browser paints the default gray play
+         triangle before 'playing'. */
+      opacity: 0; transition: opacity .25s;
     }
+    .fullscreen-video video.ready { opacity: 1; }
     footer {
       display: flex; justify-content: space-between;
       color: var(--muted); font-size: 12px;
@@ -411,7 +433,7 @@
       var badge = item.badge
         ? '<span class="card-badge">' + escapeText(item.badge) + '</span>' : '';
       var desc = item.description
-        ? '<div class="card-desc">' + escapeText(item.description) + '</div>' : '';
+        ? '<div class="card-desc-wrap"><div class="card-desc">' + escapeText(item.description) + '</div></div>' : '';
       var oldP = item.oldPrice
         ? '<span class="card-old-price">' + escapeText(item.oldPrice) + '</span>' : '';
 
@@ -479,6 +501,7 @@
       if (fullscreenVideoEl.dataset.src !== url) {
         fullscreenVideoEl.dataset.src = url;
         fullscreenVideoEl.src = url;
+        fullscreenVideoEl.classList.remove('ready');
         fullscreenVideoEl.load();
         state._videoDurSec = 0;
       }
@@ -563,6 +586,10 @@
     fullscreenVideoEl.addEventListener('loadedmetadata', rearmIfVideoPage);
     fullscreenVideoEl.addEventListener('durationchange', rearmIfVideoPage);
     fullscreenVideoEl.addEventListener('ended', advancePage);
+    /* Reveal only once a frame is actually being rendered — no gray triangle. */
+    fullscreenVideoEl.addEventListener('playing', function() {
+      fullscreenVideoEl.classList.add('ready');
+    });
 
     /* === VIDEO (preloaded cache, instant switch) === */
     var videoEls = {};     // url -> <video>
