@@ -101,7 +101,11 @@
          on 720p TV viewports (~1280 CSS px) and bloated the header to ~130px,
          starving the cards. 32px/.1em fits even ~750px-wide columns.
          nowrap+ellipsis is a safety net for very narrow viewports. */
-      line-height: 1.1;
+      /* line-height 1.45 (NOT 1.1): Glock's glyph box is ~45px at 32px font
+         (ascent+descent exceed the line box); at 1.1 the line box is 35.2px
+         and overflow:hidden (needed for ellipsis) clips 5px off the top of
+         "SMART SANDWICH BAR". Measured: glyph top is 5px above element top. */
+      line-height: 1.45;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .subtitle {
