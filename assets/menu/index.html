@@ -385,7 +385,7 @@
 
   <script>
     var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260804-133018';
+    var BUILD_ID  = 'gh-pages-20260804-134638';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
@@ -502,10 +502,13 @@
     /* === FULLSCREEN VIDEO PAGES (between RU/ME cycles) === */
     var fullscreenVideoEl = $('fullscreen-video-el');
     var fullscreenVideoWrap = $('fullscreen-video');
+    /* v79: one full future clip in memory. A blob is bounded by the largest
+       optimized clip (~1 MB) and is released when the following URL is warmed.
+       This is deliberate application-level caching: Range-cache heuristics from
+       hidden <video preload=auto> are not enough on a slow connection. */
+    var fullscreenPreload = { url: '', blobUrl: '', loading: false, failed: false, requestId: 0 };
 
-    /* Return the next fullscreen clip after pageIndex, wrapping at the end.
-       There is only one full-screen media element, so we intentionally warm
-       a single upcoming URL — never all nine clips in parallel. */
+    /* Return the next fullscreen clip after pageIndex, wrapping at the end. */
     function nextFullscreenVideoUrl(pageIndex) {
       var n = state.pages.length;
       for (var step = 1; step <= n; step++) {
@@ -515,42 +518,77 @@
       return '';
     }
 
+    function preloadFullscreenVideo(url) {
+      if (!url || fullscreenPreload.url === url) return;
+      if (fullscreenPreload.blobUrl) URL.revokeObjectURL(fullscreenPreload.blobUrl);
+      var requestId = ++fullscreenPreload.requestId;
+      fullscreenPreload = { url: url, blobUrl: '', loading: true, failed: false, requestId: requestId };
+      /* Exactly one CORS-enabled GitHub Pages MP4. Fetching the body into a
+         Blob makes the eventual <video> source local memory, so playback is
+         not interrupted by a weak or fluctuating Wi-Fi link. */
+      fetch(url, { cache: 'force-cache' })
+        .then(function(res) {
+          if (!res.ok) throw new Error('video HTTP ' + res.status);
+          return res.blob();
+        })
+        .then(function(blob) {
+          if (fullscreenPreload.requestId !== requestId) return;
+          fullscreenPreload.blobUrl = URL.createObjectURL(blob);
+          fullscreenPreload.loading = false;
+          /* The video page may already be waiting for this download. */
+          var pg = state.pages[state.page];
+          if (pg && pg.video === url) renderVideoPage(url);
+        })
+        .catch(function() {
+          if (fullscreenPreload.requestId !== requestId) return;
+          fullscreenPreload.loading = false;
+          fullscreenPreload.failed = true;
+          var pg = state.pages[state.page];
+          if (pg && pg.video === url) renderVideoPage(url);
+        });
+    }
+
     function preloadNextFullscreenVideo() {
-      var url = nextFullscreenVideoUrl(state.page);
-      if (!url || fullscreenVideoEl.dataset.src === url) return;
-      /* `metadata` is correct for the 9 side clips; this is ONE hidden media
-         element only. Auto lets that one next clip build a real buffer while
-         menu cards are on screen. It is not a 9-file parallel download. */
-      fullscreenVideoEl.preload = 'auto';
-      fullscreenVideoEl.dataset.src = url;
-      fullscreenVideoEl.src = url;
-      fullscreenVideoEl.classList.remove('ready');
-      fullscreenVideoEl.load();
-      state._videoDurSec = 0;
+      preloadFullscreenVideo(nextFullscreenVideoUrl(state.page));
     }
 
     function renderVideoPage(url) {
       fullscreenVideoWrap.classList.add('active');
+      $('page-count').textContent = state.pages.length > 1
+        ? (state.page + 1) + ' / ' + state.pages.length : '';
+      /* Direct navigation or a changed menu can reach a video that has not
+         been scheduled yet; start its one-file fetch and wait, never stream a
+         half-downloaded clip. */
+      if (fullscreenPreload.url !== url) preloadFullscreenVideo(url);
+      if (fullscreenPreload.url === url && fullscreenPreload.loading) {
+        state._videoWaiting = true;
+        return;
+      }
+      state._videoWaiting = false;
+      var mediaUrl = fullscreenPreload.url === url && fullscreenPreload.blobUrl
+        ? fullscreenPreload.blobUrl : url;  // emergency fetch failure fallback
+      var fromBlob = fullscreenPreload.url === url && Boolean(fullscreenPreload.blobUrl);
       /* Restart only when ENTERING this video page (first show, re-show after
          a menu page, or a different clip) — NOT on a data refresh while the
          same clip keeps playing, otherwise videos visibly repeat. */
       var entering = state._videoPageShown !== state.page
-        || fullscreenVideoEl.dataset.src !== url;
+        || fullscreenVideoEl.dataset.src !== url
+        || fullscreenVideoEl.dataset.mediaSrc !== mediaUrl;
       state._videoPageShown = state.page;
-      if (fullscreenVideoEl.dataset.src !== url) {
+      if (fullscreenVideoEl.dataset.src !== url || fullscreenVideoEl.dataset.mediaSrc !== mediaUrl) {
         fullscreenVideoEl.dataset.src = url;
-        fullscreenVideoEl.src = url;
+        fullscreenVideoEl.dataset.mediaSrc = mediaUrl;
+        fullscreenVideoEl.src = mediaUrl;
         fullscreenVideoEl.classList.remove('ready');
         fullscreenVideoEl.load();
         state._videoDurSec = 0;
       }
+      state._videoFromBlob = fromBlob;
       if (entering) {
         try { fullscreenVideoEl.currentTime = 0; } catch(_) {}
       }
       var p = fullscreenVideoEl.play();
       if (p && p.catch) p.catch(function() {});
-      $('page-count').textContent = state.pages.length > 1
-        ? (state.page + 1) + ' / ' + state.pages.length : '';
     }
 
     function hideVideoPage() {
@@ -573,12 +611,21 @@
       clearTimeout(state.pageTimer);
       bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
       var pg = state.pages[state.page];
+      /* A one-file Blob is still downloading. Do not arm a duration-based
+         timeout that could eject this page before its clip even starts. */
+      if (pg && pg.video && state._videoWaiting) {
+        state.pageTimer = null;
+        return;
+      }
       var sec = pageDurationSec();
       bar.style.transition = 'width ' + sec + 's linear'; bar.style.width = '0%';
-      /* Video pages: the clip's 'ended' event is the primary advance trigger;
-         the timer is a FAILSAFE (duration + 15 s) in case the clip stalls or
-         never fires 'ended'. This way the page stays on the video until it
-         actually finishes, even on a slow/stalling TV. */
+      /* A cached Blob is complete in RAM: `ended` is authoritative and no
+         timer is needed. Preserve the old duration+15s failsafe solely for
+         the exceptional direct-network fallback after a fetch error. */
+      if (pg && pg.video && state._videoFromBlob) {
+        state.pageTimer = null;
+        return;
+      }
       var fire = (pg && pg.video) ? sec + 15 : sec;
       state.pageTimer = setTimeout(advancePage, fire * 1000);
     }
@@ -624,10 +671,13 @@
        advance exactly on the real clip duration. */
     fullscreenVideoEl.addEventListener('loadedmetadata', rearmIfVideoPage);
     fullscreenVideoEl.addEventListener('durationchange', rearmIfVideoPage);
-    fullscreenVideoEl.addEventListener('ended', advancePage);
+    fullscreenVideoEl.addEventListener('ended', function() {
+      if (fullscreenVideoWrap.classList.contains('active')) advancePage();
+    });
     /* Reveal only once a frame is actually being rendered — no gray triangle. */
     fullscreenVideoEl.addEventListener('playing', function() {
       fullscreenVideoEl.classList.add('ready');
+      rearmIfVideoPage();
     });
 
     /* === VIDEO (preloaded cache, instant switch) === */
