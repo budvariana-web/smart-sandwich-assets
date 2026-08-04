@@ -173,10 +173,10 @@
       padding: 2px 0;
       flex-shrink: 0;
       /* Cap long names (e.g. "Сет МАЧО БУРГЕР: бургер, фри, соус") at 2 lines
-         so the description + price always fit inside the card (Chromium
-         -webkit-line-clamp in flex shrinks here, unlike on .card-desc) */
-      display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2; overflow: hidden;
+         so the description and the price always stay inside the card,
+         even on narrow/zoomed TV viewports. */
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+      overflow: hidden;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
@@ -188,16 +188,19 @@
     .card-desc-wrap {
       /* Plain flex item (NOT -webkit-box): shrinks reliably when the card is
          short, unlike display:-webkit-box + line-clamp which keeps its content
-         height in Chromium and pushes the price row out of the card. */
-      flex: 1 1 auto;   /* grows: keeps price pinned to card bottom */
-      min-height: 0;
-      overflow: hidden;
+         height in Chromium and pushes the price row below the card. */
+      flex: 1 1 auto; min-height: 0;
       display: flex; flex-direction: column;
+      overflow: hidden;
     }
     .card-desc {
       color: var(--muted); font-size: 13px; line-height: 1.45;
-      display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 14; overflow: hidden;
+      margin-top: 0;
+      /* 14 lines = fits the tightest card (3-line name) with ~4px spare;
+         current longest description is 6 lines. Raised from 6 so longer
+         descriptions (edited in the sheet) still render fully. */
+      display: -webkit-box; -webkit-line-clamp: 14; -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
@@ -373,7 +376,7 @@
 
   <script>
     var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260804-100924';
+    var BUILD_ID  = 'gh-pages-20260804-065743';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
@@ -753,24 +756,24 @@
 
     function loadMenu() {
       var url = API_BASE + '?page=data' + ((window.MENU_LANG === 'me' || window.MENU_LANG === 'both') ? '&lang=' + window.MENU_LANG : '');
-      fetch(url)
-        .then(function(r) {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.json();
-        })
-        .then(function(d) {
-          loadRetries = 0;
-          applyMenu(d, false);
-        })
-        .catch(function() {
-          loadRetries++;
-          if (loadRetries < MAX_RETRIES) {
-            setTimeout(loadMenu, 3000);
-          } else {
-            loadRetries = 0;
-            showCached();
-          }
-        });
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, false);
+        xhr.send();
+        if (xhr.status === 200) {
+          applyMenu(JSON.parse(xhr.responseText), false);
+          var pm = (location.search.match(/[?&]p=(\d+)/)||[])[1];
+          if (pm !== undefined) { state.page = parseInt(pm,10) % state.pages.length; renderPage(); }
+          return;
+        }
+      } catch(_) {}
+      loadRetries++;
+      if (loadRetries < MAX_RETRIES) {
+        setTimeout(loadMenu, 3000);
+      } else {
+        loadRetries = 0;
+        showCached();
+      }
     }
 
     function scheduleRefresh() {
