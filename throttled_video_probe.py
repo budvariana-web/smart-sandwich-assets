@@ -20,7 +20,11 @@ def media(frame):
       return {t:+v.currentTime.toFixed(2), dur:+(v.duration||0).toFixed(2), paused:v.paused,
               ended:v.ended, rs:v.readyState, ns:v.networkState, buffered:r,
               page:(document.getElementById('page-count')||{}).textContent,
-              active:document.getElementById('fullscreen-video').classList.contains('active')};
+              active:document.getElementById('fullscreen-video').classList.contains('active'),
+              blobSource:(v.currentSrc||'').indexOf('blob:') === 0,
+              cache:window.fullscreenPreload ? {url:window.fullscreenPreload.url.split('/').pop(),
+                loading:window.fullscreenPreload.loading, blob:!!window.fullscreenPreload.blobUrl,
+                failed:window.fullscreenPreload.failed} : null};
     }''')
 
 with sync_playwright() as p:
