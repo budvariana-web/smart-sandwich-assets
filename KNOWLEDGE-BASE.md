@@ -142,7 +142,13 @@ python video_cycle_test.py
   4. `renderVideoPage()` рестартует ролик только при ВХОДЕ на страницу
      (`state._videoPageShown`), а не при рефреше — ролик не «повторяется» визуально.
 - Правая панель (`#video-slot`, 1/4 экрана) — отдельный механизм (`ensureVideoElements`,
-  `loop=true`, переключение по `videoSeconds`/10с) — НЕ трогать.
+  `loop=false`, `ended` → `nextVideo()`, переключение ~каждые 10с по длине клипа).
+- **v77 (27d6953):** ролики → GH Pages `budvariana-web.github.io/smart-sandwich-assets/assets/videos/`
+  (video/mp4+CORS, вместо raw.githubusercontent octet-stream+nosniff); `preload='metadata'` на обоих
+  `<video>` (защита ТВ от параллельной загрузки ~30МБ). ⚠️ **MP4 ОБЯЗАТЕЛЬНО faststart** (moov в
+  начало, `ffmpeg -c copy -movflags +faststart -f mp4`): Firefox/WebKit при moov в конце +
+  preload=metadata виснут на readyState=0 (не играют ни мини-блок, ни полноэкранно), Chromium
+  доискивается сам. Пересобрано все 9 роликов (a53cc87). CDN Pages кэширует ~10 мин.
 - Проверено: ролик 10.0с → видео-страница держалась 10.2с → «4 / 26»; страница меню ровно
   15.2с даже при рефреше в середине показа (монитор); E2E — PASS «advanced via ended».
 - Инструменты (корень проекта): `python menu_monitor.py <сек>` — живые переходы страниц;
