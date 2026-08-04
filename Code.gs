@@ -150,8 +150,12 @@ function readItemsFromSheet_(menuSheet) {
     var name = normalize_(obj['название'] || obj['name'] || '');
     if (!name) continue;
     // Visibility checkbox (K 'Показывать'): explicitly FALSE hides the item.
+    // Do NOT use `||` here: boolean false is a valid value and is falsy.
     // Empty or TRUE shows it (backward compatible with pre-checkbox rows).
-    var showRaw = obj['показывать'] || obj['show'] || obj['отображать'] || '';
+    var showRaw = '';
+    if (Object.prototype.hasOwnProperty.call(obj, 'показывать')) showRaw = obj['показывать'];
+    else if (Object.prototype.hasOwnProperty.call(obj, 'show')) showRaw = obj['show'];
+    else if (Object.prototype.hasOwnProperty.call(obj, 'отображать')) showRaw = obj['отображать'];
     if (showRaw === false || String(showRaw).toLowerCase() === 'false') continue;
     // Description precedence: 'Описание наше' (J) wins, else 'Описание i-food' (C),
     // else legacy 'Описание' (pre-split sheets).
