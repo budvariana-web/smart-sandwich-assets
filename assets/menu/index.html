@@ -319,7 +319,12 @@
     .fullscreen-video video {
       width: 100%; height: 100%; object-fit: contain;
       background: #000;
+      /* Hide until the first frame is actually rendered (same trick as the
+         mini video-slot): otherwise the browser paints the default gray play
+         triangle before 'playing'. */
+      opacity: 0; transition: opacity .25s;
     }
+    .fullscreen-video video.ready { opacity: 1; }
     footer {
       display: flex; justify-content: space-between;
       color: var(--muted); font-size: 12px;
@@ -373,7 +378,7 @@
 
   <script>
     var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260804-100924';
+    var BUILD_ID  = 'gh-pages-20260804-112015';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
@@ -496,6 +501,7 @@
       if (fullscreenVideoEl.dataset.src !== url) {
         fullscreenVideoEl.dataset.src = url;
         fullscreenVideoEl.src = url;
+        fullscreenVideoEl.classList.remove('ready');
         fullscreenVideoEl.load();
         state._videoDurSec = 0;
       }
@@ -580,6 +586,10 @@
     fullscreenVideoEl.addEventListener('loadedmetadata', rearmIfVideoPage);
     fullscreenVideoEl.addEventListener('durationchange', rearmIfVideoPage);
     fullscreenVideoEl.addEventListener('ended', advancePage);
+    /* Reveal only once a frame is actually being rendered — no gray triangle. */
+    fullscreenVideoEl.addEventListener('playing', function() {
+      fullscreenVideoEl.classList.add('ready');
+    });
 
     /* === VIDEO (preloaded cache, instant switch) === */
     var videoEls = {};     // url -> <video>
