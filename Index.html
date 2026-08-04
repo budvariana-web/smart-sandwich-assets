@@ -57,7 +57,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
-      background: var(--bg) url('https://raw.githubusercontent.com/budvariana-web/smart-sandwich-assets/main/assets/images/bg-photo.jpg') center/cover no-repeat;
+      background: var(--bg) url('https://budvariana-web.github.io/smart-sandwich-assets/assets/images/bg-photo.jpg') center/cover no-repeat;
       color: var(--text);
       font-family: 'Glock Grotesque', 'Segoe UI', Arial, Helvetica, sans-serif;
       position: relative;
@@ -351,7 +351,7 @@
   </div>
 
   <div class="fullscreen-video" id="fullscreen-video">
-    <video id="fullscreen-video-el" muted playsinline preload="auto"></video>
+    <video id="fullscreen-video-el" muted playsinline preload="metadata"></video>
   </div>
 
   <script>
@@ -590,7 +590,11 @@
         if (videoEls[u]) continue;
         var v = document.createElement('video');
         v.muted = true; v.loop = false; v.playsInline = true;
-        v.preload = 'auto';
+        /* metadata, not auto: with auto the browser starts downloading all N
+           clips at once (~30 MB) and on a slow TV Wi-Fi the page stalls and
+           no clip can start. metadata gives us duration + instant start on
+           demand. */
+        v.preload = 'metadata';
         v.addEventListener('canplay', function() {
           var ph = $('video-placeholder');
           if (ph) ph.style.display = 'none';

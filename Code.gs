@@ -10,10 +10,10 @@ const CONFIG = Object.freeze({
   DEFAULT_REFRESH_SECONDS: 60,
   MAX_REFRESH_SECONDS: 600,
   BUILD_ID: '%%BUILD_ID%%',
-  GITHUB_ASSETS_BASE: 'https://raw.githubusercontent.com/budvariana-web/smart-sandwich-assets/main/assets/',
+  GITHUB_ASSETS_BASE: 'https://budvariana-web.github.io/smart-sandwich-assets/assets/',
   FALLBACK_VIDEO_URLS: [
-    'https://raw.githubusercontent.com/budvariana-web/smart-sandwich-assets/main/assets/videos/video_9c3d99d89a14.mp4',
-    'https://raw.githubusercontent.com/budvariana-web/smart-sandwich-assets/main/assets/videos/video_782087e05f39.mp4'
+    'https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_9c3d99d89a14.mp4',
+    'https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_782087e05f39.mp4'
   ]
 });
 
