@@ -373,7 +373,11 @@
   </div>
 
   <div class="fullscreen-video" id="fullscreen-video">
-    <video id="fullscreen-video-el" muted playsinline preload="metadata"></video>
+    <!-- preload=auto: ONE element (no 9-parallel risk, that's the mini-block's
+         metadata policy) — browser buffers the whole clip on entry, so the
+         next cycle's re-entry (same dataset.src, no load()) replays from the
+         element buffer with ZERO network. -->
+    <video id="fullscreen-video-el" muted playsinline preload="auto"></video>
   </div>
 
   <script>
