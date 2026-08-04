@@ -373,16 +373,15 @@
   </div>
 
   <div class="fullscreen-video" id="fullscreen-video">
-    <!-- preload=auto: ONE element (no 9-parallel risk, that's the mini-block's
-         metadata policy) — browser buffers the whole clip on entry, so the
-         next cycle's re-entry (same dataset.src, no load()) replays from the
-         element buffer with ZERO network. -->
-    <video id="fullscreen-video-el" muted playsinline preload="auto"></video>
+    <!-- preload=metadata (kept from v77): auto made the browser download all
+         clips at once on slow TV Wi-Fi and stall; re-entry on the same
+         dataset.src replays from the element buffer, so no network either. -->
+    <video id="fullscreen-video-el" muted playsinline preload="metadata"></video>
   </div>
 
   <script>
     var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260804-112754';
+    var BUILD_ID  = 'gh-pages-20260804-113310';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
