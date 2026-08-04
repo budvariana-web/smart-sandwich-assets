@@ -485,6 +485,12 @@
       if (pg && pg.video) { renderVideoPage(pg.video); return; }
       state._videoPageShown = -1;
       hideVideoPage();
+      /* v79: exactly ONE look-ahead download. The next fullscreen clip starts
+         buffering while the two preceding menu pages are shown (~30 seconds),
+         instead of first requesting its body when its video page opens.
+         This is deliberately NOT the old all-N preload=auto that stalled slow
+         TV Wi-Fi: fullscreenVideoEl is one element and one request only. */
+      preloadNextFullscreenVideo();
       var items = Array.isArray(pg) ? pg : [];
       $('menu').innerHTML = items.length
         ? items.map(itemMarkup).join('')
@@ -496,6 +502,32 @@
     /* === FULLSCREEN VIDEO PAGES (between RU/ME cycles) === */
     var fullscreenVideoEl = $('fullscreen-video-el');
     var fullscreenVideoWrap = $('fullscreen-video');
+
+    /* Return the next fullscreen clip after pageIndex, wrapping at the end.
+       There is only one full-screen media element, so we intentionally warm
+       a single upcoming URL — never all nine clips in parallel. */
+    function nextFullscreenVideoUrl(pageIndex) {
+      var n = state.pages.length;
+      for (var step = 1; step <= n; step++) {
+        var candidate = state.pages[(pageIndex + step) % n];
+        if (candidate && candidate.video) return candidate.video;
+      }
+      return '';
+    }
+
+    function preloadNextFullscreenVideo() {
+      var url = nextFullscreenVideoUrl(state.page);
+      if (!url || fullscreenVideoEl.dataset.src === url) return;
+      /* `metadata` is correct for the 9 side clips; this is ONE hidden media
+         element only. Auto lets that one next clip build a real buffer while
+         menu cards are on screen. It is not a 9-file parallel download. */
+      fullscreenVideoEl.preload = 'auto';
+      fullscreenVideoEl.dataset.src = url;
+      fullscreenVideoEl.src = url;
+      fullscreenVideoEl.classList.remove('ready');
+      fullscreenVideoEl.load();
+      state._videoDurSec = 0;
+    }
 
     function renderVideoPage(url) {
       fullscreenVideoWrap.classList.add('active');
