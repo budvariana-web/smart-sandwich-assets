@@ -43,14 +43,14 @@ class PDF(FPDF):
             except Exception:pass
     def item(self,it,p,x,y,w,h):
         self.set_fill_color(*PALE);self.set_draw_color(207,226,238);self.rect(x,y,w,h,'DF');self.set_fill_color(*ORANGE);self.rect(x,y,1.4,h,'F')
-        # Slightly narrower image rail gives the complete text more room at a larger print size.
-        self.picture(p,x+2,y+2,15,h-4)
-        tx=x+19;tw=w-21;name=it['name'];desc=re.sub(r'\s+',' ',it.get('description','')).strip()
+        # A narrower photo rail maximizes readable type while retaining a photo for every item.
+        self.picture(p,x+2,y+2,12,h-4)
+        tx=x+16;tw=w-18;name=it['name'];desc=re.sub(r'\s+',' ',it.get('description','')).strip()
         # Fixed price rail and adaptive text scale: retain full source description inside the card.
-        self.set_font('Arial','B',6.7 if len(name)<31 else 5.7);self.set_text_color(*INK);self.set_xy(tx,y+2);self.multi_cell(tw-13,2.8,name,align='L')
-        self.set_font('Arial','B',7.0);self.set_text_color(*ORANGE);self.set_xy(x+w-12,y+2);self.cell(10,3,it['price'],align='R')
-        desc_font=5.0 if len(desc)<180 else 4.5
-        self.set_font('Arial','',desc_font);self.set_text_color(*MUTED);self.set_xy(tx,y+8.8 if len(name)<31 else y+11.8);self.multi_cell(tw,2.25 if desc_font>4.6 else 2.05,desc,align='L')
+        self.set_font('Arial','B',7.4 if len(name)<31 else 6.3);self.set_text_color(*INK);self.set_xy(tx,y+2);self.multi_cell(tw-13,3.05,name,align='L')
+        self.set_font('Arial','B',7.7);self.set_text_color(*ORANGE);self.set_xy(x+w-12,y+2);self.cell(10,3,it['price'],align='R')
+        desc_font=5.5 if len(desc)<180 else 5.0
+        self.set_font('Arial','',desc_font);self.set_text_color(*MUTED);self.set_xy(tx,y+9.4 if len(name)<31 else y+12.6);self.multi_cell(tw,2.45 if desc_font>5.2 else 2.25,desc,align='L')
 
 def draw_col(pdf,items,img,x,y,title):
     y=pdf.section(x,y,64,title)
