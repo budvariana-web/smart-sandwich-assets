@@ -39,7 +39,7 @@ class A5(FPDF):
         self.set_fill_color(*NAVY); self.rect(0,0,148,18,"F"); self.set_fill_color(*BLUE); self.rect(0,17.2,148,.8,"F")
         self.set_font("Arial","B",10.5); self.set_text_color(*WHITE); self.set_xy(8,4); self.cell(100,4.7,title)
         self.set_font("Arial","",5.9); self.set_text_color(195,222,240); self.set_xy(8,10); self.cell(110,3.5,sub)
-        self.set_font("Arial","B",6.5); self.set_xy(127,7); self.cell(13,4,"%d / 8"%page,align="R")
+        self.set_font("Arial","B",6.5); self.set_xy(127,7); self.cell(13,4,"%d / 14"%page,align="R")
     def foot(self):
         self.set_draw_color(205,222,235); self.line(8,199,140,199)
         self.set_font("Arial","",5.2); self.set_text_color(*MUTED); self.set_xy(8,201); self.cell(132,3,"SMART SANDWICH BAR  •  Bar, Crna Gora  •  @smartsandwichbar",align="C")
@@ -53,20 +53,26 @@ class A5(FPDF):
         self.set_font("Arial","B",10); self.set_text_color(*NAVY); self.set_xy(8,y); self.cell(75,4.5,title.upper())
         self.set_font("Arial","",5.8); self.set_text_color(*MUTED); self.set_xy(8,y+5); self.cell(132,3,note,align="R")
         self.set_draw_color(*BLUE); self.line(8,y+9,140,y+9); return y+12
-    def card(self,it,img,y,h=39):
+    def card(self,it,img,y,h=70):
         x=8; w=132; self.set_fill_color(*MIST); self.set_draw_color(205,222,235); self.rect(x,y,w,h,"DF")
-        self.image_box(img,x+1.2,y+1.2,31,h-2.4)
-        tx=x+35; name=it['name']; desc=short(it.get('description',''),138)
-        fs=8.3 if len(name)<38 else 7.4; dy=y+(14 if len(name)<38 else 19)
-        self.set_font("Arial","B",fs); self.set_text_color(*INK); self.set_xy(tx,y+3); self.multi_cell(73,4,name)
-        self.set_font("Arial","B",8.6); self.set_text_color(*ORANGE); self.set_xy(x+w-19,y+3); self.cell(15,4,it['price'],align="R")
+        image_w = 48 if h >= 60 else 35
+        self.image_box(img,x+1.5,y+1.5,image_w,h-3)
+        tx=x+image_w+4; name=it['name']; desc=short(it.get('description',''),190)
+        large = h >= 60
+        long_title = len(name) > 27
+        fs=(10.5 if not long_title else 9.0) if large else (8.8 if not long_title else 7.7)
+        dy=y+(18 if not long_title else 29) if large else y+(15 if not long_title else 22)
+        self.set_font("Arial","B",fs); self.set_text_color(*INK); self.set_xy(tx,y+4); self.multi_cell(57 if large else 56,5.1 if large else 4.3,name)
+        self.set_font("Arial","B",10.2 if large else 8.8); self.set_text_color(*ORANGE); self.set_xy(x+w-22,y+4); self.cell(18,5,it['price'],align="R")
         if desc:
-            self.set_font("Arial","",5.6); self.set_text_color(*MUTED); self.set_xy(tx,dy); self.multi_cell(92,2.75,desc)
+            self.set_font("Arial","",7.2 if large else 6.2); self.set_text_color(*MUTED); self.set_xy(tx,dy); self.multi_cell(78 if large else 90,3.6 if large else 3.0,desc)
 
 def menu_pages(pdf, items, imgs, title, note, page, cards):
     pdf.add_page(); pdf.top(title,note,page); y=pdf.heading(title,note)
+    h = 70 if len(items) <= 2 else 48
+    gap = 4
     for it in items:
-        pdf.card(it,imgs.get(it['name']),y); y+=42
+        pdf.card(it,imgs.get(it['name']),y,h); y+=h+gap
     pdf.foot()
 
 def main():
@@ -85,24 +91,21 @@ def main():
     pdf.set_font('Arial','',7.2);pdf.set_text_color(*WHITE);pdf.set_xy(12,78);pdf.multi_cell(57,4,'Свежая выпечка, авторские соусы и яркие вкусы — в самом сердце Бара.')
     pdf.set_fill_color(*ORANGE);pdf.rect(12,97,52,9,'F');pdf.set_font('Arial','B',6.5);pdf.set_xy(14,100);pdf.cell(48,3,'МЕНЮ И ЦЕНЫ • 2026',align='C')
     pdf.set_font('Arial','',6);pdf.set_text_color(185,222,247);pdf.set_xy(12,196);pdf.cell(120,3,'Bar, Crna Gora   •   @smartsandwichbar')
-    # 2 burgers, 3-4 sandwiches
-    menu_pages(pdf,g['Бургеры'],imgs,'Бургеры','горячие • сытные • приготовлены с характером',2,4)
-    menu_pages(pdf,g['Сэндвичи'][:3],imgs,'Сэндвичи','на чиабатте и фокачче',3,3)
-    menu_pages(pdf,g['Сэндвичи'][3:],imgs,'Сэндвичи','тёплые, хрустящие, с щедрой начинкой',4,3)
-    # 5 Italian bites
-    menu_pages(pdf,g['Брускеты']+g['Фокачча'],imgs,'Брускеты и фокачча','идеально к кофе или как лёгкая закуска',5,3)
-    # 6 starters
-    menu_pages(pdf,g['Закуски'],imgs,'Закуски','золотистые, хрустящие, к любому настроению',6,4)
-    # 7 compact extras
-    pdf.add_page();pdf.top('Хлеб, десерт и соусы','маленькие дополнения — большая разница',7); y=pdf.heading('Хлеб и десерт','')
-    for it in g['Хлеб']+g['Десерты']:
-        pdf.card(it,imgs.get(it['name']),y,35);y+=38
-    y+=2;pdf.set_font('Arial','B',9);pdf.set_text_color(*NAVY);pdf.set_xy(8,y);pdf.cell(55,4,'СОУСЫ')
-    y+=7
-    for i,it in enumerate(g['Соусы']):
-        x=8+(i%2)*67; yy=y+(i//2)*15;pdf.set_fill_color(*PALE);pdf.rect(x,yy,63,12,'F');pdf.set_font('Arial','B',6.7);pdf.set_text_color(*INK);pdf.set_xy(x+3,yy+3);pdf.cell(42,3,it['name']);pdf.set_text_color(*ORANGE);pdf.cell(15,3,it['price'],align='R')
-    pdf.foot()
-    # 8 back cover
+    # Exactly two menu items per A5 page for comfortable print readability.
+    menu_pages(pdf,g['Бургеры'][:2],imgs,'Бургеры','горячие • сытные • приготовлены с характером',2,2)
+    menu_pages(pdf,g['Бургеры'][2:],imgs,'Бургеры','горячие • сытные • приготовлены с характером',3,2)
+    menu_pages(pdf,g['Сэндвичи'][:2],imgs,'Сэндвичи','на чиабатте и фокачче',4,2)
+    menu_pages(pdf,g['Сэндвичи'][2:4],imgs,'Сэндвичи','на чиабатте и фокачче',5,2)
+    menu_pages(pdf,g['Сэндвичи'][4:],imgs,'Сэндвичи','на чиабатте и фокачче',6,2)
+    italian=g['Брускеты']+g['Фокачча']
+    menu_pages(pdf,italian[:2],imgs,'Брускеты и фокачча','идеально к кофе или как лёгкая закуска',7,2)
+    menu_pages(pdf,italian[2:],imgs,'Брускеты и фокачча','идеально к кофе или как лёгкая закуска',8,1)
+    menu_pages(pdf,g['Закуски'][:2],imgs,'Закуски','золотистые, хрустящие, к любому настроению',9,2)
+    menu_pages(pdf,g['Закуски'][2:],imgs,'Закуски','золотистые, хрустящие, к любому настроению',10,2)
+    menu_pages(pdf,g['Хлеб']+g['Десерты'],imgs,'Хлеб и десерт','небольшое дополнение к вашему заказу',11,2)
+    menu_pages(pdf,g['Соусы'][:2],imgs,'Соусы','маленькие дополнения — большая разница',12,2)
+    menu_pages(pdf,g['Соусы'][2:],imgs,'Соусы','маленькие дополнения — большая разница',13,2)
+    # 14 back cover
     pdf.add_page();pdf.set_fill_color(*NAVY);pdf.rect(0,0,148,210,'F');pdf.set_fill_color(*BLUE);pdf.rect(0,0,148,5,'F')
     pdf.image_box(imgs.get(g['Бургеры'][1]['name']),20,24,108,74)
     pdf.set_font('Arial','B',13);pdf.set_text_color(*WHITE);pdf.set_xy(12,118);pdf.multi_cell(124,6,'ЗАКАЗЫВАЙТЕ ЛЮБИМЫЕ ВКУСЫ\nВ SMART SANDWICH BAR')
