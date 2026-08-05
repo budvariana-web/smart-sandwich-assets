@@ -1,0 +1,260 @@
+{
+  "items": [
+    {
+      "name": "MACHO BURGER",
+      "category": "Burgers",
+      "price": "7,50 €",
+      "oldPrice": "",
+      "description": "Black artisan brioche bun, freshly baked in-house, our signature spicy sauce, 100% beef patty (made with only beef and spices, nothing else), Cheddar cheese, caramelized onions, fresh tomato, and crisp lettuce.",
+      "badge": "",
+      "orderKey": "10",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/1.%20%D0%A7%D0%B5%D1%80%D0%BD%D1%8B%D0%B9%20%D0%91%D1%83%D1%80%D0%B3%D0%B5%D1%80_s.jpg"
+    },
+    {
+      "name": "BELLA BURGER",
+      "category": "Burgers",
+      "price": "6,50 €",
+      "oldPrice": "",
+      "description": "Pink homemade brioche bun, handmade aioli sauce with French mustard, chicken fillet patty (made with only chicken and spices, nothing else), Cheddar cheese, caramelized onions, fresh tomato, and crisp lettuce.",
+      "badge": "",
+      "orderKey": "20",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/2.%20%D0%A0%D0%BE%D0%B7%D0%BE%D0%B2%D1%8B%D0%B9%20%D0%B1%D1%83%D1%80%D0%B3%D0%B5%D1%80_s.jpg"
+    },
+    {
+      "name": "Bella Burger Set: burger, fries & sauce",
+      "category": "Burgers",
+      "price": "9,00 €",
+      "oldPrice": "",
+      "description": "Pink brioche chicken burger (400 g), 150 g French fries and a sauce of your choice: aioli, ketchup or chilli ketchup.",
+      "badge": "",
+      "orderKey": "30",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/b29c93e435fd691963456d73d932cf36.png"
+    },
+    {
+      "name": "MACHO BURGER Set: burger, fries & sauce",
+      "category": "Burgers",
+      "price": "10,00 €",
+      "oldPrice": "",
+      "description": "Black MACHO burger with beef, French fries with smoked paprika, and a sauce of your choice: ketchup, chilli ketchup or aioli with French mustard.",
+      "badge": "",
+      "orderKey": "40",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/3.%20%D0%A1%D0%B5%D1%82%20%D0%B1%D1%83%D1%80%D0%B3%D0%B5%D1%80_s.jpg"
+    },
+    {
+      "name": "Neapolitano Sandwich",
+      "category": "Sandwiches",
+      "price": "4,50 €",
+      "oldPrice": "",
+      "description": "Homemade ciabatta, pesto sauce, Italian mortadella, mozzarella, and sun-dried tomatoes. Before serving, the sandwich is toasted in a panini press until golden and crispy.",
+      "badge": "",
+      "orderKey": "50",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/4.%20%D0%A1%D0%B5%D0%BD%D0%B4%D0%B2%D0%B8%D1%87%20%D0%9D%D0%B5%D0%BE%D0%BF%D0%BE%D0%BB%D0%B8%D1%82%D0%B0%D0%BD%D0%BE_s.jpg"
+    },
+    {
+      "name": "Ukrainian Vibe Sandwich",
+      "category": "Sandwiches",
+      "price": "4,50 €",
+      "oldPrice": "",
+      "description": "Homemade ciabatta (baked fresh by us), roasted pork with garlic and spices, pickled cucumber, pickled red onion, homemade aioli with French mustard, ketchup, and BBQ sauce. If you like it spicy, we'll gladly add some heat.",
+      "badge": "",
+      "orderKey": "60",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/5.%20%D0%A1%D0%B5%D0%BD%D0%B4%D0%B2%D0%B8%D1%87%20%D0%A3%D0%BA%D1%80%20%D0%B2%D0%B0%D0%B9%D0%B1_s.jpg"
+    },
+    {
+      "name": "Neapolitano Plus Sandwich",
+      "category": "Sandwiches",
+      "price": "4,50 €",
+      "oldPrice": "",
+      "description": "Focaccia seasoned with Parmesan cheese and Italian herbs, Italian mortadella, pesto sauce, mozzarella, sun-dried tomatoes, and fresh tomatoes.",
+      "badge": "",
+      "orderKey": "70",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/8.%20%D0%A1%D0%B5%D0%BD%D0%B4%D0%B2%D0%B8%D1%87%20%D1%81%20%D0%BC%D0%BE%D1%80%D1%82%D0%B0%D0%B4%D0%B5%D0%BB%D0%BB%D0%BE%D0%B9_s.jpg"
+    },
+    {
+      "name": "Montenegro Love Sandwich",
+      "category": "Sandwiches",
+      "price": "4,50 €",
+      "oldPrice": "",
+      "description": "A classic Montenegrin flavour: Njeguši cured prosciutto, Edam cheese, fresh cucumber and a sauce of ketchup, mayonnaise, mustard and pickles.",
+      "badge": "",
+      "orderKey": "80",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/9.%20%D0%A1%D0%B5%D0%BD%D0%B4%D0%B2%D0%B8%D1%87%20%D1%81%20%D0%BF%D1%80%D1%88%D1%82%D0%BE%D0%BC_s.jpg"
+    },
+    {
+      "name": "Catalan Chicken Sandwich",
+      "category": "Sandwiches",
+      "price": "4,50 €",
+      "oldPrice": "",
+      "description": "Chicken thighs are first marinated in red wine with capers, olives, garlic, and onions. They are then oven-roasted, sliced, and served on ciabatta or focaccia with an olive-based sauce and fresh tomatoes. Before serving, the sandwich is toasted on a panini press until golden and crispy.",
+      "badge": "",
+      "orderKey": "90",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/10_%D0%A1%D0%B5%D0%BD%D0%B4%D0%B2%D0%B8%D1%87_%D1%81_%D0%BA%D1%83%D1%80%D0%B8%D1%86%D0%B5%D0%B9_%D0%BF%D0%BE_%D0%9A%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%BD%D1%81%D0%BA%D0%B8_s.jpg"
+    },
+    {
+      "name": "Salami Sandwich",
+      "category": "Sandwiches",
+      "price": "4,50 €",
+      "oldPrice": "",
+      "description": "Italian salami, fresh tomato and mozzarella on ciabatta, toasted in a press grill until crisp.",
+      "badge": "",
+      "orderKey": "100",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/dbb4b14a88a7eec2f46cc77a1256f17d.jpg"
+    },
+    {
+      "name": "Bruschetta with Caramelized Onion & Prosciutto",
+      "category": "Bruschetta",
+      "price": "2,50 €",
+      "oldPrice": "",
+      "description": "Toasted bread with caramelized onion and tender prosciutto.",
+      "badge": "",
+      "orderKey": "110",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/12_%D0%91%D1%80%D1%83%D1%81%D0%BA%D0%B5%D1%82%D1%82%D0%B0_%D1%81_%D0%BA%D0%B0%D1%80%D0%B0%D0%BC%D0%B5%D0%BB%D0%B8%D0%B7%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%BC_%D0%BB%D1%83%D0%BA%D0%BE%D0%BC_%D0%B8_%D0%BF%D1%80%D1%88%D1%82%D0%BE%D0%BC_s.jpg"
+    },
+    {
+      "name": "Bruschetta with Cherry Tomatoes, Olives & Salami",
+      "category": "Bruschetta",
+      "price": "2,50 €",
+      "oldPrice": "",
+      "description": "Toasted bread with cherry tomatoes, olives and salami.",
+      "badge": "",
+      "orderKey": "120",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/13_%D0%91%D1%80%D1%83%D1%81%D0%BA%D0%B5%D1%82%D0%B0_%D1%81_%D1%87%D0%B5%D1%80%D1%80%D0%B8%2C_%D0%BC%D0%B0%D1%81%D0%BB%D0%B8%D0%BD%D0%B0%D0%BC%D0%B8_%D0%B8_%D1%81%D0%B0%D0%BB%D1%8F%D0%BC%D0%B8_s.jpg"
+    },
+    {
+      "name": "Focaccia with Olives & Cheese",
+      "category": "Focaccia",
+      "price": "4,50 €",
+      "oldPrice": "",
+      "description": "Homemade focaccia with olives and cheese — delicious as a snack or as a sandwich base.",
+      "badge": "",
+      "orderKey": "130",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/14.%20%D0%A4%D0%BE%D0%BA%D0%B0%D1%87%D1%87%D0%B0%20%D1%86%D0%B5%D0%BB%D0%B0%D1%8F_s.jpg"
+    },
+    {
+      "name": "Arancini",
+      "category": "Appetizers",
+      "price": "4,20 €",
+      "oldPrice": "",
+      "description": "A Sicilian street-food classic: a crispy fried rice ball filled with meat ragù, green peas and mozzarella. 220 g each.",
+      "badge": "",
+      "orderKey": "140",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/15.%20%D0%90%D1%80%D0%B0%D0%BD%D1%87%D0%B8%D0%BD%D0%B8_s.jpg"
+    },
+    {
+      "name": "Garlic Rye Croutons",
+      "category": "Appetizers",
+      "price": "3,50 €",
+      "oldPrice": "",
+      "description": "House-baked dark rye bread with malt, fried until crisp and finished with garlic confit.",
+      "badge": "",
+      "orderKey": "150",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/16.%20%D1%87%D0%B5%D1%81%D0%BD%D0%BE%D1%87%D0%BD%D1%8B%D0%B5%20%D0%B3%D1%80%D0%B5%D0%BD%D0%BA%D0%B8%20_s.jpg"
+    },
+    {
+      "name": "Croutons Set with 3 Sauces",
+      "category": "Appetizers",
+      "price": "5,50 €",
+      "oldPrice": "",
+      "description": "Garlic rye croutons served with three sauces: aioli, caramelized onion and Marinade sauce with olive oil, garlic and herbs.",
+      "badge": "",
+      "orderKey": "160",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/17%20%D0%A1%D0%B5%D1%82%20%D0%B3%D1%80%D0%B5%D0%BD%D0%BA%D0%B8%20%D0%B8%203%20%D1%81%D0%BE%D1%83%D1%81%D0%B0_s.jpg"
+    },
+    {
+      "name": "French Fries",
+      "category": "Appetizers",
+      "price": "2,50 €",
+      "oldPrice": "",
+      "description": "Golden French fries (150 g), served with a choice of ketchup, chilli ketchup or aioli.",
+      "badge": "",
+      "orderKey": "170",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/205941d9b48b20929ead4b69ac807903.jpg"
+    },
+    {
+      "name": "Ciabatta 160-170 gr",
+      "category": "Bread",
+      "price": "1,50 €",
+      "oldPrice": "",
+      "description": "Italian ciabatta, baked in-house and used for our sandwiches.",
+      "badge": "",
+      "orderKey": "180",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/487fa97c97c6155641b369d93b4c96e8.jpg"
+    },
+    {
+      "name": "Taormina Orange Cake",
+      "category": "Desserts",
+      "price": "1,50 €",
+      "oldPrice": "",
+      "description": "Made only with natural ingredients: oranges, vegetable oil, eggs and flour. A taste of Sicily in every slice.",
+      "badge": "",
+      "orderKey": "190",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/21%2C%2022%20%D0%90%D0%BF%D0%B5%D0%BB%D1%8C%D1%81%D0%B8%D0%BD%D0%BE%D0%B2%D1%8B%D0%B9%20%D0%BA%D0%B5%D0%BA%D1%81_s.jpg"
+    },
+    {
+      "name": "Caramelized Onion Sauce",
+      "category": "Sauces",
+      "price": "1,00 €",
+      "oldPrice": "",
+      "description": "Sweet and savoury caramelized onion sauce.",
+      "badge": "",
+      "orderKey": "200",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/23.%20%D0%A1%D0%BE%D1%83%D1%81%20%D0%9A%D0%B0%D1%80%D0%B0%D0%BC%D0%B5%D0%BB%D0%B8%D0%B7%20%D0%BB%D1%83%D0%BA_s.jpg"
+    },
+    {
+      "name": "Aioli",
+      "category": "Sauces",
+      "price": "1,00 €",
+      "oldPrice": "",
+      "description": "Creamy handmade aioli sauce.",
+      "badge": "",
+      "orderKey": "210",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/24.%20%D0%90%D0%B9%D0%BE%D0%BB%D0%B8_s.jpg"
+    },
+    {
+      "name": "Spicy Ketchup",
+      "category": "Sauces",
+      "price": "1,00 €",
+      "oldPrice": "",
+      "description": "Ketchup with a spicy kick.",
+      "badge": "",
+      "orderKey": "220",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/Smart_Sandwich_Bar/27.%20%D0%9E%D1%81%D1%82%D1%80%D1%8B%D0%B9%20%D0%BA%D0%B5%D1%82%D1%87%D1%83%D0%BF_s.jpg"
+    },
+    {
+      "name": "Ketchup",
+      "category": "Sauces",
+      "price": "1,00 €",
+      "oldPrice": "",
+      "description": "Classic ketchup.",
+      "badge": "",
+      "orderKey": "230",
+      "imageUrl": "https://api.i-food.me/files/assets/img/ImagesPages/products/9c357408fea3609158dd7f1db5b84f9b.jpg"
+    }
+  ],
+  "brand": "SMART SANDWICH BAR",
+  "refreshSeconds": 60,
+  "pageSeconds": 15,
+  "videoSeconds": 40,
+  "announcements": [
+    "КАЖДАЯ БУЛОЧКА, ЧИАБАТА ИЛИ ФОКАЧЧА ВЫПЕКАЕТСЯ НАМИ С ЛЮБОВЬЮ!",
+    "Новый сэндвич Неаполитано — попробуй сегодня",
+    "БЕСПЛАТНАЯ БАРСКАЯ ДОСТАВКА ЛЮБОГО БЛЮДА ОТ 6€!",
+    "Оставьте честный отзыв на Google maps о Smart Sandwich bar!"
+  ],
+  "announcementSeconds": 8,
+  "videoUrls": [
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_9c3d99d89a14.mp4",
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_782087e05f39.mp4",
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_b07c2bc2993b.mp4",
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_238615a4699a.mp4",
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_ff44eb3e2819.mp4",
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_2c3483f72f6c.mp4",
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_806930a272c8.mp4",
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_74a633e4a7e4.mp4",
+    "https://budvariana-web.github.io/smart-sandwich-assets/assets/videos/video_0bb2694359bc.mp4"
+  ],
+  "buildId": "menu-v60-i18n-20260804-195244",
+  "sourceSheet": "MENU + MENU_ME",
+  "lang": "both",
+  "language": "en"
+}
