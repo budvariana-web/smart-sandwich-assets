@@ -1,0 +1,15 @@
+{
+  "status": "deployed",
+  "scriptId": "1ocvsaP1j5MPe3INWrUQmbSw0IT2ZOi-ZszAMeaDPoJgqLnjLBqvdzjJr",
+  "versionNumber": 5,
+  "deploymentId": "AKfycbyheidwMsfCQd-s4GtvgjWtuBYEwKuHGfAE0f_OCOs-pBHj3TJaIkit7NgfJ0jiKL1WpA",
+  "webAppUrls": [
+    "https://script.google.com/macros/s/AKfycbyheidwMsfCQd-s4GtvgjWtuBYEwKuHGfAE0f_OCOs-pBHj3TJaIkit7NgfJ0jiKL1WpA/exec"
+  ],
+  "webAppConfig": [
+    {
+      "access": "ANYONE_ANONYMOUS",
+      "executeAs": "USER_DEPLOYING"
+    }
+  ]
+}
