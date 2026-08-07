@@ -95,18 +95,15 @@
     }
     header > div:first-child { min-width: 0; }
     .brand {
-      letter-spacing: .1em; font-weight: 900;
+      letter-spacing: .085em; font-weight: 900;
       font-size: 32px; text-transform: uppercase;
-      /* Glock Grotesque is very wide: at 38px + .15em it wrapped to 2 lines
-         on 720p TV viewports (~1280 CSS px) and bloated the header to ~130px,
-         starving the cards. 32px/.1em fits even ~750px-wide columns.
-         nowrap+ellipsis is a safety net for very narrow viewports. */
-      /* line-height 1.45 (NOT 1.1): Glock's glyph box is ~45px at 32px font
-         (ascent+descent exceed the line box); at 1.1 the line box is 35.2px
-         and overflow:hidden (needed for ellipsis) clips 5px off the top of
-         "SMART SANDWICH BAR". Measured: glyph top is 5px above element top. */
+      /* Glock's glyph box needs 1.45; a tighter line box clips its top. */
       line-height: 1.45;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .header-clock {
+      display: inline-block; margin-right: .45em; color: var(--accent);
+      font-variant-numeric: tabular-nums;
     }
     .subtitle {
       margin-top: 4px; color: var(--muted);
@@ -269,6 +266,14 @@
       color: var(--accent);
     }
     .announcement strong { color: var(--accent); }
+    .weather-card { width: 100%; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; text-align: left; }
+    .weather-icon { grid-row: 1 / 4; font-size: 44px; line-height: 1; }
+    .weather-date { font-size: 14px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .weather-main { font-size: 26px; line-height: 1; font-weight: 900; color: var(--text); }
+    .weather-temps { display: flex; flex-wrap: wrap; gap: 5px 11px; font-size: 14px; line-height: 1.25; color: var(--muted); }
+    .weather-temps b { color: var(--accent); font-size: 17px; }
+    .weather-status { font-size: 12px; color: var(--muted); }
+    .weather-card.loading { display: flex; justify-content: center; text-align: center; font-size: 18px; }
     .video-slot {
       position: relative; flex: 0 0 33%;
       border-radius: 16px;
@@ -344,7 +349,7 @@
     <div class="products-zone">
       <header>
         <div>
-          <div class="brand" id="brand">SMART SANDWICH BAR</div>
+          <div class="brand" id="brand"><span class="header-clock" id="header-clock">--:--</span><span id="brand-name">SMART SANDWICH BAR</span></div>
           <div class="subtitle" id="subtitle">АКТУАЛЬНОЕ МЕНЮ</div>
         </div>
         <div class="page-count" id="page-count"></div>
@@ -393,17 +398,20 @@
       ru: {
         subtitle: 'АКТУАЛЬНОЕ МЕНЮ', offline: 'НЕТ СВЯЗИ', loading: 'Загрузка меню...',
         video: 'Промо-ролик', empty: 'Сейчас нет доступных позиций', akcija: 'Акция',
-        error: 'Ошибка загрузки', cached: 'Показана сохранённая версия', updated: 'Обновлено'
+        error: 'Ошибка загрузки', cached: 'Показана сохранённая версия', updated: 'Обновлено',
+        weather: 'Бар · погода', inBar: 'В БАРЕ', loadingWeather: 'Загружаем погоду…'
       },
       me: {
         subtitle: 'AKTUELNI MENI', offline: 'NEMA VEZE', loading: 'Učitavanje menija...',
         video: 'Promo video', empty: 'Trenutno nema dostupnih stavki', akcija: 'Akcija',
-        error: 'Greška pri učitavanju', cached: 'Prikazana sačuvana verzija', updated: 'Ažurirano'
+        error: 'Greška pri učitavanju', cached: 'Prikazana sačuvana verzija', updated: 'Ažurirano',
+        weather: 'Bar · vrijeme', inBar: 'U BARU', loadingWeather: 'Učitavanje vremena…'
       },
       both: {
         subtitle: 'АКТУАЛЬНОЕ МЕНЮ · AKTUELNI MENI', offline: 'НЕТ СВЯЗИ', loading: 'Загрузка меню...',
         video: 'Промо-ролик', empty: 'Сейчас нет доступных позиций', akcija: 'Акция',
-        error: 'Ошибка загрузки', cached: 'Показана сохранённая версия', updated: 'Обновлено'
+        error: 'Ошибка загрузки', cached: 'Показана сохранённая версия', updated: 'Обновлено',
+        weather: 'Бар · погода', inBar: 'В БАРЕ', loadingWeather: 'Загружаем погоду…'
       }
     };
     var T = I18N[window.MENU_LANG] || I18N.ru;
@@ -416,16 +424,65 @@
 
     var state = {
       data: null, pages: [], page: 0,
-      pageTimer: null, refreshTimer: null, videoTimer: null, annTimer: null,
-      videoIndex: 0
+      pageTimer: null, refreshTimer: null, videoTimer: null, annTimer: null, weatherTimer: null,
+      videoIndex: 0, weather: null
     };
 
     function $(id) { return document.getElementById(id); }
 
+    /* All dates and the header clock use the cafe's local time, not the TV's
+       potentially misconfigured timezone. */
+    function updateHeaderClock() {
+      $('header-clock').textContent = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Podgorica', hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(new Date());
+    }
+    updateHeaderClock();
+    setInterval(updateHeaderClock, 1000);
+
+    var WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=42.0938&longitude=19.1002&current=temperature_2m,precipitation,weather_code&timezone=Europe%2FPodgorica';
+    function weatherVisual(code) {
+      code = Number(code);
+      if (code === 0) return { icon: '☀️', label: 'ясно' };
+      if (code <= 3) return { icon: '⛅', label: 'облачно' };
+      if (code === 45 || code === 48) return { icon: '🌫️', label: 'туман' };
+      if (code >= 51 && code <= 67) return { icon: '🌧️', label: 'дождь' };
+      if (code >= 71 && code <= 77) return { icon: '❄️', label: 'снег' };
+      if (code >= 80 && code <= 82) return { icon: '🌦️', label: 'ливень' };
+      if (code >= 95) return { icon: '⛈️', label: 'гроза' };
+      return { icon: '🌤️', label: 'переменная облачность' };
+    }
     function escapeText(v) {
       return String(v || '').replace(/[&<>"']/g, function(c) {
         return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];
       });
+    }
+    function weatherMarkup() {
+      var now = new Date();
+      var date = new Intl.DateTimeFormat(TIME_LOCALE, { timeZone: 'Europe/Podgorica', weekday: 'long', day: 'numeric', month: 'long' }).format(now);
+      var w = state.weather;
+      if (!w) return '<div class="weather-card loading">' + escapeText(T.loadingWeather) + '</div>';
+      var visual = weatherVisual(w.weather_code);
+      var outside = Math.round(Number(w.temperature_2m));
+      var precipitation = Number(w.precipitation || 0);
+      var indoor = state.data && state.data.indoorTemperature ? String(state.data.indoorTemperature) : '—';
+      var rain = precipitation > 0 ? ' · ' + precipitation.toFixed(1).replace('.', ',') + ' мм' : '';
+      return '<div class="weather-card">'
+        + '<div class="weather-icon">' + visual.icon + '</div>'
+        + '<div class="weather-date">' + escapeText(date) + '</div>'
+        + '<div class="weather-main">Бар <b>' + outside + '°</b>' + rain + '</div>'
+        + '<div class="weather-temps"><span>🌡 <b>' + outside + '°</b> город</span><span>🏠 <b>' + escapeText(indoor) + '</b> ' + escapeText(T.inBar) + '</span></div>'
+        + '<div class="weather-status">' + escapeText(visual.label) + '</div></div>';
+    }
+    function loadWeather() {
+      fetch(WEATHER_URL).then(function(r) { if (!r.ok) throw new Error('weather'); return r.json(); })
+        .then(function(data) { state.weather = data.current || null; renderAnnouncements(); })
+        .catch(function() { state.weather = null; renderAnnouncements(); });
+    }
+    function scheduleWeather() {
+      clearInterval(state.weatherTimer);
+      loadWeather();
+      state.weatherTimer = setInterval(loadWeather, 10 * 60 * 1000);
     }
 
     /* === CARD RENDERING === */
@@ -766,22 +823,31 @@
       var zone = $('video-zone');
       var tText = $('ann-top-text'), bText = $('ann-bottom-text');
       var tBadge = $('ann-top-badge'), bBadge = $('ann-bottom-badge');
+      /* Weather is one additional slide in the upper promo card. Existing
+         promotions keep rotating in both cards exactly as before. */
       if (!anns.length) {
-        zone.classList.add('no-ann');
-        top.style.display = 'none';
+        zone.classList.remove('no-ann');
+        top.style.display = '';
         bottom.style.display = 'none';
+        tText.innerHTML = weatherMarkup();
+        tBadge.textContent = '';
         return;
       }
       zone.classList.remove('no-ann');
       top.style.display = '';
+      var topSlot = annIndex % (anns.length + 1);
+      var isWeather = topSlot === anns.length;
+      var bottomIdx = isWeather ? 0 : (topSlot + 1) % anns.length;
+      if (isWeather) {
+        tText.innerHTML = weatherMarkup();
+        tBadge.textContent = '';
+      } else {
+        tText.textContent = anns[topSlot];
+        tBadge.textContent = T.akcija + ' ' + (topSlot + 1) + ' / ' + anns.length;
+      }
+      bText.textContent = anns[bottomIdx];
       bottom.style.display = '';
-      var topIdx = annIndex % anns.length;
-      var bottomIdx = (annIndex + 1) % anns.length;
-      tText.textContent = anns[topIdx];
-      bText.textContent = anns.length > 1 ? anns[bottomIdx] : '';
-      bottom.style.display = anns.length > 1 ? '' : 'none';
-      tBadge.textContent = anns.length > 1 ? T.akcija + ' ' + (topIdx + 1) + ' / ' + anns.length : '';
-      bBadge.textContent = anns.length > 1 ? T.akcija + ' ' + (bottomIdx + 1) + ' / ' + anns.length : '';
+      bBadge.textContent = T.akcija + ' ' + (bottomIdx + 1) + ' / ' + anns.length;
     }
 
     function scheduleAnnouncements() {
@@ -811,7 +877,7 @@
         state.pages = interleaveVideoPages(state.pages, data.videoUrls);
       }
       state.page = Math.min(prevPage, state.pages.length - 1);
-      $('brand').textContent = data.brand || 'SMART SANDWICH BAR';
+      $('brand-name').textContent = data.brand || 'SMART SANDWICH BAR';
       $('updated').textContent = cached
         ? T.cached
         : T.updated + ' ' + new Date().toLocaleTimeString(TIME_LOCALE, {hour:'2-digit', minute:'2-digit'});
@@ -829,9 +895,10 @@
         scheduleVideo();
       }
 
-      /* Announcements */
+      /* Announcements + the weather slide in the upper promo card */
       renderAnnouncements();
       scheduleAnnouncements();
+      scheduleWeather();
 
       if (!cached) localStorage.setItem(CACHE_KEY, JSON.stringify(data));
     }

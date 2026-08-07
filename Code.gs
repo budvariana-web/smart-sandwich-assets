@@ -219,6 +219,7 @@ function readMenuItems_(lang) {
   var pageSec = 15;
   var videoSec = 10;
   var annSec = 8;
+  var indoorTemperature = '';
   var videoUrls = [];
   if (settingsSheet) {
     var sd = settingsSheet.getDataRange().getValues();
@@ -231,6 +232,9 @@ function readMenuItems_(lang) {
       if (key === 'перелистывание (сек)' || key === 'page') pageSec = parseInt(val) || 15;
       if (key === 'видео интервал (сек)' || key === 'video seconds') videoSec = parseInt(val) || 10;
       if (key === 'объявления (сек)' || key === 'announcements seconds') annSec = parseInt(val) || 8;
+      /* Manual reading from the room thermometer. Examples: "23°", "23 °C".
+         The screen deliberately shows — until the owner supplies a reading. */
+      if (key === 'температура в баре' || key === 'indoor temperature' || key === 'bar temperature') indoorTemperature = val;
       if (key === 'video_urls' || key === 'видео urls' || key === 'video' || key === 'видео') {
         videoUrls = parseVideoUrls_(val);
       }
@@ -244,6 +248,7 @@ function readMenuItems_(lang) {
     items: items, brand: brand,
     refreshSeconds: refreshSec, pageSeconds: pageSec, videoSeconds: videoSec,
     announcements: readAnnouncements_(lang === 'both' ? 'ru' : lang), announcementSeconds: annSec,
+    indoorTemperature: indoorTemperature,
     videoUrls: videoUrls, buildId: CONFIG.BUILD_ID,
     sourceSheet: sourceName, lang: lang
   };
