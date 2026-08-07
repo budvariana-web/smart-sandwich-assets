@@ -266,14 +266,35 @@
       color: var(--accent);
     }
     .announcement strong { color: var(--accent); }
-    .weather-card { width: 100%; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; text-align: left; }
-    .weather-icon { grid-row: 1 / 4; font-size: 44px; line-height: 1; }
-    .weather-date { font-size: 14px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-    .weather-main { font-size: 26px; line-height: 1; font-weight: 900; color: var(--text); }
-    .weather-temps { display: flex; flex-wrap: wrap; gap: 5px 11px; font-size: 14px; line-height: 1.25; color: var(--muted); }
-    .weather-temps b { color: var(--accent); font-size: 17px; }
-    .weather-status { font-size: 12px; color: var(--muted); }
-    .weather-card.loading { display: flex; justify-content: center; text-align: center; font-size: 18px; }
+    #ann-top-text { display: block; width: 100%; }
+    .weather-card {
+      width: 100%; display: grid;
+      grid-template-columns: 1fr auto; grid-template-rows: 36px 60px auto;
+      gap: 2px 12px; align-items: center; text-align: left;
+      padding: 2px; color: #12375b; position: relative; overflow: hidden;
+    }
+    .weather-card::after {
+      content: ''; position: absolute; width: 145px; height: 145px;
+      right: -53px; top: -65px; border-radius: 50%;
+      background: rgba(91, 190, 255, .20); pointer-events: none;
+    }
+    .weather-place { display: block; font-size: 10px; line-height: 1.1; font-weight: 900; letter-spacing: .045em; text-transform: uppercase; color: #3975a8; white-space: nowrap; }
+    .weather-reading { grid-column: 1; grid-row: 2; align-self: start; }
+    .weather-temperature { font-size: 46px; line-height: .88; letter-spacing: -.06em; font-weight: 900; color: #146eb5; white-space: nowrap; }
+    .weather-icon { grid-column: 2; grid-row: 1 / 3; font-size: 48px; line-height: 1; z-index: 1; filter: drop-shadow(0 5px 7px rgba(50, 139, 203, .17)); }
+    .weather-range { font-size: 11px; color: #5e7890; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .weather-stats { grid-column: 1 / -1; grid-row: 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding-top: 4px; border-top: 1px solid rgba(40, 117, 177, .16); }
+    .weather-stat { min-width: 0; }
+    .weather-stat-label { display: block; font-size: 8px; line-height: 1.1; letter-spacing: .02em; text-transform: uppercase; color: #6c879f; white-space: nowrap; }
+    .weather-stat-value { display: block; margin-top: 1px; font-size: 13px; line-height: 1.1; font-weight: 900; color: #1c5f92; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .weather-updated { grid-column: 1 / -1; grid-row: 4; font-size: 10px; line-height: 1.1; color: #7790a6; letter-spacing: .03em; }
+    .weather-card.loading { display: flex; min-height: 0; align-items: center; justify-content: center; text-align: center; font-size: 17px; color: var(--muted); }
+    @media (max-width: 900px) {
+      .weather-card { gap: 2px 8px; }
+      .weather-temperature { font-size: 43px; }
+      .weather-icon { font-size: 47px; }
+      .weather-stat-value { font-size: 13px; }
+    }
     .video-slot {
       position: relative; flex: 0 0 33%;
       border-radius: 16px;
@@ -390,7 +411,7 @@
 
   <script>
     var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260807-085900';
+    var BUILD_ID  = 'gh-pages-20260807-100705';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
@@ -399,19 +420,22 @@
         subtitle: 'АКТУАЛЬНОЕ МЕНЮ', offline: 'НЕТ СВЯЗИ', loading: 'Загрузка меню...',
         video: 'Промо-ролик', empty: 'Сейчас нет доступных позиций', akcija: 'Акция',
         error: 'Ошибка загрузки', cached: 'Показана сохранённая версия', updated: 'Обновлено',
-        weather: 'Бар · погода', inBar: 'В БАРЕ', loadingWeather: 'Загружаем погоду…'
+        loadingWeather: 'Загружаем погоду…', weatherUnavailable: 'Погода в Баре временно недоступна', weatherPlace: 'Бар · Черногория', feels: 'ощ.', wind: 'ветер', precipitation: 'дождь', weatherLow: 'мин.', weatherHigh: 'макс.', weatherUpdated: 'данные',
+        weather: {clear:'Ясно', cloudy:'Облачно', fog:'Туман', rain:'Дождь', snow:'Снег', shower:'Ливень', storm:'Гроза', variable:'Переменная облачность'}
       },
       me: {
         subtitle: 'AKTUELNI MENI', offline: 'NEMA VEZE', loading: 'Učitavanje menija...',
         video: 'Promo video', empty: 'Trenutno nema dostupnih stavki', akcija: 'Akcija',
         error: 'Greška pri učitavanju', cached: 'Prikazana sačuvana verzija', updated: 'Ažurirano',
-        weather: 'Bar · vrijeme', inBar: 'U BARU', loadingWeather: 'Učitavanje vremena…'
+        loadingWeather: 'Učitavanje vremena…', weatherUnavailable: 'Vrijeme u Baru privremeno nije dostupno', weatherPlace: 'Bar · Crna Gora', feels: 'osj.', wind: 'vjetar', precipitation: 'kiša', weatherLow: 'min.', weatherHigh: 'maks.', weatherUpdated: 'podaci',
+        weather: {clear:'Vedro', cloudy:'Oblačno', fog:'Magla', rain:'Kiša', snow:'Snijeg', shower:'Pljusak', storm:'Grmljavina', variable:'Promjenljivo oblačno'}
       },
       both: {
         subtitle: 'АКТУАЛЬНОЕ МЕНЮ · AKTUELNI MENI', offline: 'НЕТ СВЯЗИ', loading: 'Загрузка меню...',
         video: 'Промо-ролик', empty: 'Сейчас нет доступных позиций', akcija: 'Акция',
         error: 'Ошибка загрузки', cached: 'Показана сохранённая версия', updated: 'Обновлено',
-        weather: 'Бар · погода', inBar: 'В БАРЕ', loadingWeather: 'Загружаем погоду…'
+        loadingWeather: 'Загружаем погоду…', weatherUnavailable: 'Погода в Баре временно недоступна', weatherPlace: 'Бар · Черногория', feels: 'ощ.', wind: 'ветер', precipitation: 'дождь', weatherLow: 'мин.', weatherHigh: 'макс.', weatherUpdated: 'данные',
+        weather: {clear:'Ясно', cloudy:'Облачно', fog:'Туман', rain:'Дождь', snow:'Снег', shower:'Ливень', storm:'Гроза', variable:'Переменная облачность'}
       }
     };
     var T = I18N[window.MENU_LANG] || I18N.ru;
@@ -425,7 +449,7 @@
     var state = {
       data: null, pages: [], page: 0,
       pageTimer: null, refreshTimer: null, videoTimer: null, annTimer: null, weatherTimer: null,
-      videoIndex: 0, weather: null
+      videoIndex: 0, weather: null, weatherFailed: false
     };
 
     function $(id) { return document.getElementById(id); }
@@ -440,17 +464,21 @@
     updateHeaderClock();
     setInterval(updateHeaderClock, 1000);
 
-    var WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=42.0938&longitude=19.1002&current=temperature_2m,precipitation,weather_code&timezone=Europe%2FPodgorica';
+    var WEATHER_CACHE_KEY = 'sb-weather-bar-v2';
+    var WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=42.0938&longitude=19.1002&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=Europe%2FPodgorica';
     function weatherVisual(code) {
       code = Number(code);
-      if (code === 0) return { icon: '☀️', label: 'ясно' };
-      if (code <= 3) return { icon: '⛅', label: 'облачно' };
-      if (code === 45 || code === 48) return { icon: '🌫️', label: 'туман' };
-      if (code >= 51 && code <= 67) return { icon: '🌧️', label: 'дождь' };
-      if (code >= 71 && code <= 77) return { icon: '❄️', label: 'снег' };
-      if (code >= 80 && code <= 82) return { icon: '🌦️', label: 'ливень' };
-      if (code >= 95) return { icon: '⛈️', label: 'гроза' };
-      return { icon: '🌤️', label: 'переменная облачность' };
+      if (code === 0) return { icon: '☀️', key: 'clear' };
+      if (code <= 3) return { icon: '⛅', key: 'cloudy' };
+      if (code === 45 || code === 48) return { icon: '🌫️', key: 'fog' };
+      if (code >= 51 && code <= 67) return { icon: '🌧️', key: 'rain' };
+      if (code >= 71 && code <= 77) return { icon: '❄️', key: 'snow' };
+      if (code >= 80 && code <= 82) return { icon: '🌦️', key: 'shower' };
+      if (code >= 95) return { icon: '⛈️', key: 'storm' };
+      return { icon: '🌤️', key: 'variable' };
+    }
+    function weatherDegree(value) {
+      return Math.round(Number(value)) + '°';
     }
     function escapeText(v) {
       return String(v || '').replace(/[&<>"']/g, function(c) {
@@ -458,29 +486,45 @@
       });
     }
     function weatherMarkup() {
-      var now = new Date();
-      var date = new Intl.DateTimeFormat(TIME_LOCALE, { timeZone: 'Europe/Podgorica', weekday: 'long', day: 'numeric', month: 'long' }).format(now);
-      var w = state.weather;
-      if (!w) return '<div class="weather-card loading">' + escapeText(T.loadingWeather) + '</div>';
+      var payload = state.weather;
+      if (!payload || !payload.current) {
+        return '<div class="weather-card loading">' + escapeText(state.weatherFailed ? T.weatherUnavailable : T.loadingWeather) + '</div>';
+      }
+      var w = payload.current;
+      var daily = payload.daily || {};
       var visual = weatherVisual(w.weather_code);
-      var outside = Math.round(Number(w.temperature_2m));
-      var precipitation = Number(w.precipitation || 0);
-      var indoor = state.data && state.data.indoorTemperature ? String(state.data.indoorTemperature) : '—';
-      var rain = precipitation > 0 ? ' · ' + precipitation.toFixed(1).replace('.', ',') + ' мм' : '';
+      var min = daily.temperature_2m_min && daily.temperature_2m_min.length ? weatherDegree(daily.temperature_2m_min[0]) : '—';
+      var max = daily.temperature_2m_max && daily.temperature_2m_max.length ? weatherDegree(daily.temperature_2m_max[0]) : '—';
+      var rain = Number(w.precipitation || 0);
       return '<div class="weather-card">'
-        + '<div class="weather-icon">' + visual.icon + '</div>'
-        + '<div class="weather-date">' + escapeText(date) + '</div>'
-        + '<div class="weather-main">Бар <b>' + outside + '°</b>' + rain + '</div>'
-        + '<div class="weather-temps"><span>🌡 <b>' + outside + '°</b> город</span><span>🏠 <b>' + escapeText(indoor) + '</b> ' + escapeText(T.inBar) + '</span></div>'
-        + '<div class="weather-status">' + escapeText(visual.label) + '</div></div>';
+        + '<div><div class="weather-place">' + escapeText(T.weatherPlace) + '</div></div>'
+        + '<div class="weather-icon" aria-hidden="true">' + visual.icon + '</div>'
+        + '<div class="weather-reading"><div class="weather-temperature">' + weatherDegree(w.temperature_2m) + '</div><div class="weather-range">' + escapeText(T.weather[visual.key]) + ' · ' + min + ' — ' + max + '</div></div>'
+        + '<div class="weather-stats">'
+        + '<div class="weather-stat"><span class="weather-stat-label">' + escapeText(T.feels) + '</span><span class="weather-stat-value">' + weatherDegree(w.apparent_temperature) + '</span></div>'
+        + '<div class="weather-stat"><span class="weather-stat-label">' + escapeText(T.wind) + '</span><span class="weather-stat-value">' + Math.round(Number(w.wind_speed_10m || 0)) + ' км/ч</span></div>'
+        + '<div class="weather-stat"><span class="weather-stat-label">' + escapeText(T.precipitation) + '</span><span class="weather-stat-value">' + rain.toFixed(1).replace('.', ',') + ' мм</span></div>'
+        + '</div></div>';
+    }
+    function restoreWeatherCache() {
+      try {
+        var cached = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY));
+        if (cached && cached.data && Date.now() - cached.savedAt < 6 * 60 * 60 * 1000) state.weather = cached.data;
+      } catch (_) {}
     }
     function loadWeather() {
       fetch(WEATHER_URL).then(function(r) { if (!r.ok) throw new Error('weather'); return r.json(); })
-        .then(function(data) { state.weather = data.current || null; renderAnnouncements(); })
-        .catch(function() { state.weather = null; renderAnnouncements(); });
+        .then(function(data) {
+          if (!data.current) throw new Error('weather payload');
+          state.weather = data; state.weatherFailed = false;
+          try { localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({savedAt: Date.now(), data: data})); } catch (_) {}
+          renderAnnouncements();
+        })
+        .catch(function() { state.weatherFailed = !state.weather; renderAnnouncements(); });
     }
     function scheduleWeather() {
-      clearInterval(state.weatherTimer);
+      if (state.weatherTimer) return;
+      restoreWeatherCache();
       loadWeather();
       state.weatherTimer = setInterval(loadWeather, 10 * 60 * 1000);
     }
