@@ -8,7 +8,7 @@ Transforms:
 import re, time
 from pathlib import Path
 
-SRC = Path(__file__).parent / "delivery" / "smart-sandwich-menu-display" / "Index.html"
+SRC = Path(__file__).parent / "apps" / "menu-display" / "Index.html"
 DST = Path(__file__).parent / "assets" / "menu" / "index.html"
 
 html = SRC.read_text(encoding="utf-8")

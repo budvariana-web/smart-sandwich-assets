@@ -9,6 +9,5 @@ __pycache__/
 node_modules/
 .cache/
 .herms/
-delivery/smart-sandwich-menu-display/
 sketches/
 *.sha256.md

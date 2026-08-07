@@ -57,7 +57,7 @@ def deploy(description="deploy"):
     # Read files
     files = []
     for fname in ["Code.gs", "Index.html", "Assets.html", "appsscript.json"]:
-        path = os.path.join(BASE_DIR, "delivery", "smart-sandwich-menu-display", fname)
+        path = os.path.join(BASE_DIR, "apps", "menu-display", fname)
         if not os.path.exists(path):
             path = os.path.join(BASE_DIR, fname)
         with open(path, "r", encoding="utf-8") as f:

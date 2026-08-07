@@ -5,7 +5,7 @@ import json, time, urllib.request, urllib.parse, os, sys
 BASE = r'C:\Users\Asus\AppData\Local\hermes\projects\smart-sandwich-bar'
 TOKEN_PATH = os.path.join(BASE, '.credentials', 'scripts-oauth-token.json')
 CLIENT_PATH = os.path.join(BASE, '.credentials', 'client-secret.json')
-SRC = os.path.join(BASE, 'delivery', 'smart-sandwich-menu-display')
+SRC = os.path.join(BASE, 'apps', 'menu-display')
 SCRIPT_ID = '1ocvsaP1j5MPe3INWrUQmbSw0IT2ZOi-ZszAMeaDPoJgqLnjLBqvdzjJr'
 DEPLOY_ID = 'AKfycbxlyDvP-_TbVVXGXG7_rxKdXvowJxPu8gn8BXpLKuGnfsCmpHL71CXIWSVUbbamwY4skg'
 

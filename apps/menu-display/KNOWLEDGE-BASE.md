@@ -86,7 +86,7 @@ non-safelisted CORS-заголовок → preflight → GAS блокирует 
 
 ```bash
 # Состояние кода перед правкой
-cd /c/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar/delivery/smart-sandwich-menu-display
+cd /c/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar/apps/menu-display
 git log --oneline -8 && git status --short
 
 # Деплой + проверка
