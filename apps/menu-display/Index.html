@@ -563,11 +563,9 @@
     }
 
     /* In both mode, pages alternate: RU trio, ME trio, RU trio, ME trio...
-       Insert a fullscreen video page after each RU+ME pair (odd page indices),
-       assigning each video EXACTLY ONCE per cycle (no repeats). If there are
-       more videos than pairs, remaining videos play as fullscreen pages at the
-       end of the cycle. If fewer videos than pairs, the last pairs continue
-       without a video pause. */
+       Insert a fullscreen video page after each RU+ME pair. A single menu
+       cycle may use only those pair slots: surplus clips are selected for a
+       later menu cycle, never appended as a video-only tail. */
     function interleaveVideoPages(pages, videoUrls) {
       var out = [];
       var vi = 0;
@@ -577,8 +575,19 @@
           out.push({ video: videoUrls[vi++] });
         }
       }
-      while (vi < videoUrls.length) out.push({ video: videoUrls[vi++] });
       return out;
+    }
+
+    /* Take the next non-repeating slice of the stable shuffled order. The
+       final slice may be shorter than the number of menu-pair slots; only
+       after it is shown does the cursor return to the first clip. */
+    function fullscreenVideoBatch(order, slots, offset) {
+      var clean = order || [];
+      if (!clean.length || slots < 1) return { urls: [], nextOffset: 0 };
+      var start = Math.max(0, Math.min(Number(offset) || 0, clean.length - 1));
+      var count = Math.min(slots, clean.length - start);
+      var next = start + count;
+      return { urls: clean.slice(start, next), nextOffset: next >= clean.length ? 0 : next };
     }
 
     function renderPage() {
@@ -739,7 +748,15 @@
       if (state._lastAdvance && now - state._lastAdvance < 1500) return;
       state._lastAdvance = now;
       hideVideoPage();
-      state.page = (state.page + 1) % state.pages.length;
+      if (state.page === state.pages.length - 1) {
+        /* A menu cycle finished. Only now move to the next non-repeating
+           fullscreen-video batch; ordinary data refreshes keep this batch. */
+        advanceFullscreenVideoCycle();
+        state.pages = buildDisplayPages(state.data);
+        state.page = 0;
+      } else {
+        state.page++;
+      }
       renderPage();
       armPageTimer($('timer-bar'));
     }
@@ -786,6 +803,7 @@
     var videoOrder = [];   // ordered urls
     var activeVideoUrl = '';
     var videoShuffles = {}; // independent stable random orders: side/fullscreen
+    var fullscreenCycle = { key: '', offset: 0, nextOffset: 0 };
 
     /* Fisher–Yates shuffle. An order is stable during a display session, so a
        60-second data refresh cannot restart/repeat a clip. Adding/removing a
@@ -803,6 +821,21 @@
       }
       videoShuffles[lane] = { key: key, urls: shuffled };
       return shuffled.slice();
+    }
+
+    function fullscreenVideosForMenuCycle(urls, menuPageCount) {
+      var order = shuffledVideoUrls(urls, 'fullscreen');
+      var key = order.slice().sort().join('\n');
+      if (fullscreenCycle.key !== key) {
+        fullscreenCycle = { key: key, offset: 0, nextOffset: 0 };
+      }
+      var batch = fullscreenVideoBatch(order, Math.floor(menuPageCount / 2), fullscreenCycle.offset);
+      fullscreenCycle.nextOffset = batch.nextOffset;
+      return batch.urls;
+    }
+
+    function advanceFullscreenVideoCycle() {
+      if (fullscreenCycle.key) fullscreenCycle.offset = fullscreenCycle.nextOffset;
     }
 
     function ensureVideoElements(urls) {
@@ -925,6 +958,14 @@
     }
 
     /* === APPLY DATA === */
+    function buildDisplayPages(data) {
+      var menuPages = paginate(data.items);
+      if (window.MENU_LANG === 'both' && data.videoUrls && data.videoUrls.length) {
+        return interleaveVideoPages(menuPages, fullscreenVideosForMenuCycle(data.videoUrls, menuPages.length));
+      }
+      return menuPages;
+    }
+
     function applyMenu(data, cached) {
       if (!data || !Array.isArray(data.items)) {
         $('updated').textContent = T.error;
@@ -934,11 +975,7 @@
       /* Keep the current position across data refreshes (refresh runs every
          refreshSeconds) instead of jumping back to page 1. */
       var prevPage = (typeof state.page === 'number') ? state.page : 0;
-      state.pages = paginate(data.items);
-      /* In both mode: interleave fullscreen video pages after each RU+ME pair */
-      if (window.MENU_LANG === 'both' && data.videoUrls && data.videoUrls.length) {
-        state.pages = interleaveVideoPages(state.pages, shuffledVideoUrls(data.videoUrls, 'fullscreen'));
-      }
+      state.pages = buildDisplayPages(data);
       state.page = Math.min(prevPage, state.pages.length - 1);
       $('brand-name').textContent = data.brand || 'SMART SANDWICH BAR';
       $('updated').textContent = cached
