@@ -7,7 +7,9 @@ with sync_playwright() as p:
     page = browser.new_page(viewport={"width": 1920, "height": 1080})
     page.on("console", lambda m: errors.append(f"{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
-    page.goto("http://127.0.0.1:8766/assets/menu/index.html?lang=both", wait_until="networkidle", timeout=30000)
+    # The page intentionally maintains background video/weather requests, so
+    # networkidle can never be a reliable readiness signal.
+    page.goto("http://127.0.0.1:8766/assets/menu/index.html?lang=both", wait_until="domcontentloaded", timeout=30000)
     page.wait_for_function("() => window.state && state.data && state.pages && state.pages.length", timeout=30000)
 
     def probe(label):
@@ -25,13 +27,10 @@ with sync_playwright() as p:
     page.evaluate("() => { state.page = state.pages.length - 1; state._lastAdvance = 0; advancePage(); }")
     third = probe("cycle3")
     all_videos = first["vids"] + second["vids"] + third["vids"]
-    overlap = sorted(set(first["vids"]).intersection(second["vids"]))
-    result = {"cycles": [first, second, third], "overlap12": overlap,
-              "allFirstPassUnique": len(set(all_videos)), "consoleErrors": errors}
+    result = {"cycles": [first, second, third], "firstPassUnique": len(set(all_videos)), "consoleErrors": errors}
     print(json.dumps(result, ensure_ascii=False))
     assert all(not item["adjacent"] for item in (first, second, third))
-    assert (first["videos"], second["videos"], third["videos"]) == (8, 8, 1)
-    assert not overlap
-    assert len(set(all_videos)) == 17
+    assert (first["videos"], second["videos"], third["videos"]) == (3, 3, 3)
+    assert len(set(all_videos)) == 9, "the first nine scheduled fullscreen clips must not repeat"
     assert not errors
     browser.close()

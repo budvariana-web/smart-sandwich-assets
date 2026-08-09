@@ -155,63 +155,62 @@
       object-fit: contain;
     }
 
-    /* Info zone: fills remaining; category pinned top, price pinned bottom */
+    /* Info zone: two compact language blocks share the available height; price
+       stays pinned to the bottom even for the longest translated descriptions. */
     .card-info {
       display: flex; flex-direction: column;
-      padding: 26px 24px 26px;
-      gap: 12px;
+      padding: 16px 20px 18px;
+      gap: 7px;
       flex: 1;
       min-height: 0;
     }
     .card-category {
-      color: var(--accent); font-size: 14px; font-weight: 800;
-      text-transform: uppercase; letter-spacing: .12em;
-      line-height: 1.3; padding: 1px 0;
+      color: var(--accent); font-size: 11px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .1em;
+      line-height: 1.25; padding: 1px 0;
       flex-shrink: 0;
     }
+    .card-language-list {
+      display: flex; flex-direction: column; flex: 1 1 auto;
+      min-height: 0; overflow: hidden;
+    }
+    .card-language-block {
+      display: flex; flex-direction: column; flex: 1 1 0;
+      min-height: 0; overflow: hidden; padding: 3px 0;
+    }
+    .card-language-block + .card-language-block {
+      border-top: 1px solid var(--line); padding-top: 8px;
+    }
     .card-name {
-      font-size: 24px; font-weight: 900; line-height: 1.3;
-      padding: 2px 0;
-      flex-shrink: 0;
-      /* Cap long names (e.g. "Сет МАЧО БУРГЕР: бургер, фри, соус") at 2 lines
-         so the description + price always fit inside the card (Chromium
-         -webkit-line-clamp in flex shrinks here, unlike on .card-desc) */
+      font-size: 16px; font-weight: 900; line-height: 1.22;
+      padding: 0; flex-shrink: 0;
       display: -webkit-box; -webkit-box-orient: vertical;
       -webkit-line-clamp: 2; overflow: hidden;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
-      margin-top: 0; padding: 5px 12px; border-radius: 6px;
+      margin-top: 0; padding: 4px 10px; border-radius: 6px;
       background: var(--accent); color: #ffffff;
-      font-size: 14px; font-weight: 900; text-transform: uppercase;
+      font-size: 12px; font-weight: 900; text-transform: uppercase;
       flex-shrink: 0;
     }
-    .card-desc-wrap {
-      /* Plain flex item (NOT -webkit-box): shrinks reliably when the card is
-         short, unlike display:-webkit-box + line-clamp which keeps its content
-         height in Chromium and pushes the price row out of the card. */
-      flex: 1 1 auto;   /* grows: keeps price pinned to card bottom */
-      min-height: 0;
-      overflow: hidden;
-      display: flex; flex-direction: column;
-    }
+    .card-desc-wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; }
     .card-desc {
-      color: var(--muted); font-size: 13px; line-height: 1.45;
+      color: var(--muted); font-size: 12px; line-height: 1.35;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 14; overflow: hidden;
+      -webkit-line-clamp: 4; overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
-      margin-top: auto; padding-top: 0;
-      flex-shrink: 0;
+      margin-top: auto; padding-top: 2px; flex-shrink: 0;
     }
     .card-price {
-      color: var(--accent); font-weight: 900; font-size: 27px;
-      line-height: 1.25; padding: 1px 0;
+      color: var(--accent); font-weight: 900; font-size: 26px;
+      line-height: 1.2; padding: 1px 0;
     }
     .card-old-price {
-      color: var(--muted); font-size: 16px; text-decoration: line-through;
-      line-height: 1.25;
+      color: var(--muted); font-size: 15px; text-decoration: line-through;
+      line-height: 1.2;
     }
 
     /* No-image placeholder */
@@ -530,26 +529,30 @@
     }
 
     /* === CARD RENDERING === */
-    function itemMarkup(item) {
+    function itemMarkup(item, pair, showCategories) {
       var imageUrl = String(item.imageUrl || '');
       var hasImage = imageUrl.indexOf('https://') === 0;
-
       var imgHtml = hasImage
         ? '<div class="card-img"><img src="' + escapeText(imageUrl) + '" alt="" loading="lazy"></div>'
         : '<div class="card-no-img"></div>';
-
-      var badge = item.badge
-        ? '<span class="card-badge">' + escapeText(item.badge) + '</span>' : '';
-      var desc = item.description
-        ? '<div class="card-desc-wrap"><div class="card-desc">' + escapeText(item.description) + '</div></div>' : '';
-      var oldP = item.oldPrice
-        ? '<span class="card-old-price">' + escapeText(item.oldPrice) + '</span>' : '';
-
+      var languages = item.languages || {ru: item};
+      var first = languages[pair[0]] || languages.ru || item;
+      var second = languages[pair[1]] || languages.ru || item;
+      function languageBlock(text) {
+        var description = text.description
+          ? '<div class="card-desc-wrap"><div class="card-desc">' + escapeText(text.description) + '</div></div>' : '';
+        return '<div class="card-language-block"><div class="card-name">' + escapeText(text.name) + '</div>' + description + '</div>';
+      }
+      var categories = [first.category, second.category].filter(function(value, index, values) {
+        return value && values.indexOf(value) === index;
+      });
+      var category = showCategories && categories.length
+        ? '<div class="card-category">' + escapeText(categories.join(' · ')) + '</div>' : '';
+      var badge = item.badge ? '<span class="card-badge">' + escapeText(item.badge) + '</span>' : '';
+      var oldP = item.oldPrice ? '<span class="card-old-price">' + escapeText(item.oldPrice) + '</span>' : '';
       return '<article class="card">' + imgHtml
-        + '<div class="card-info">'
-        + '<div class="card-category">' + escapeText(item.category) + '</div>'
-        + '<div class="card-name">' + escapeText(item.name) + '</div>'
-        + badge + desc
+        + '<div class="card-info">' + category + badge
+        + '<div class="card-language-list">' + languageBlock(first) + languageBlock(second) + '</div>'
         + '<div class="card-price-row"><span class="card-price">' + escapeText(item.price) + '</span>' + oldP + '</div>'
         + '</div></article>';
     }
@@ -557,29 +560,38 @@
     /* === PAGINATION === */
     function paginate(items) {
       var pages = [];
-      for (var i = 0; i < items.length; i += CARDS_PER_PAGE)
-        pages.push(items.slice(i, i + CARDS_PER_PAGE));
+      for (var i = 0; i < items.length; i += CARDS_PER_PAGE) pages.push(items.slice(i, i + CARDS_PER_PAGE));
       return pages.length ? pages : [[]];
     }
 
-    /* In both mode, pages alternate: RU trio, ME trio, RU trio, ME trio...
-       Insert a fullscreen video page after each RU+ME pair. A single menu
-       cycle may use only those pair slots: surplus clips are selected for a
-       later menu cycle, never appended as a video-only tail. */
-    function interleaveVideoPages(pages, videoUrls) {
+    /* One product set is up to three items. Each set gets two screens with the
+       same products: ME+RU, then EN+DE. A clip follows every configured count
+       of sets, and also the final partial batch before the menu restarts. */
+    function buildBilingualPages(items, bundlesBeforeVideo, videoUrls) {
       var out = [];
-      var vi = 0;
-      for (var i = 0; i < pages.length; i++) {
-        out.push(pages[i]);
-        if (i % 2 === 1 && vi < videoUrls.length) {
-          out.push({ video: videoUrls[vi++] });
+      var every = Math.max(1, Number(bundlesBeforeVideo) || 3);
+      var setCount = 0;
+      var videoIndex = 0;
+      for (var i = 0; i < items.length; i += CARDS_PER_PAGE) {
+        var group = items.slice(i, i + CARDS_PER_PAGE);
+        out.push({items: group, pair: ['me', 'ru']});
+        out.push({items: group, pair: ['en', 'de']});
+        setCount++;
+        var endOfMenu = i + CARDS_PER_PAGE >= items.length;
+        if ((setCount % every === 0 || endOfMenu) && videoUrls && videoUrls[videoIndex]) {
+          out.push({video: videoUrls[videoIndex++]});
         }
       }
-      return out;
+      return out.length ? out : [{items: [], pair: ['me', 'ru']}];
+    }
+
+    function bilingualVideoSlots(itemCount, bundlesBeforeVideo) {
+      var sets = Math.ceil(Math.max(0, itemCount) / CARDS_PER_PAGE);
+      return Math.ceil(sets / Math.max(1, Number(bundlesBeforeVideo) || 3));
     }
 
     /* Take the next non-repeating slice of the stable shuffled order. The
-       final slice may be shorter than the number of menu-pair slots; only
+       final slice may be shorter than the number of planned video slots; only
        after it is shown does the cursor return to the first clip. */
     function fullscreenVideoBatch(order, slots, offset) {
       var clean = order || [];
@@ -601,9 +613,10 @@
          This is deliberately NOT the old all-N preload=auto that stalled slow
          TV Wi-Fi: fullscreenVideoEl is one element and one request only. */
       preloadNextFullscreenVideo();
-      var items = Array.isArray(pg) ? pg : [];
+      var items = pg && pg.items ? pg.items : (Array.isArray(pg) ? pg : []);
+      var pair = pg && pg.pair ? pg.pair : [window.MENU_LANG === 'me' ? 'me' : 'ru', window.MENU_LANG === 'me' ? 'me' : 'ru'];
       $('menu').innerHTML = items.length
-        ? items.map(itemMarkup).join('')
+        ? items.map(function(item) { return itemMarkup(item, pair, !state.data || state.data.showCategories !== false); }).join('')
         : '<div class="empty">' + T.empty + '</div>';
       $('page-count').textContent = state.pages.length > 1
         ? (state.page + 1) + ' / ' + state.pages.length : '';
@@ -823,13 +836,13 @@
       return shuffled.slice();
     }
 
-    function fullscreenVideosForMenuCycle(urls, menuPageCount) {
+    function fullscreenVideosForMenuCycle(urls, videoSlots) {
       var order = shuffledVideoUrls(urls, 'fullscreen');
       var key = order.slice().sort().join('\n');
       if (fullscreenCycle.key !== key) {
         fullscreenCycle = { key: key, offset: 0, nextOffset: 0 };
       }
-      var batch = fullscreenVideoBatch(order, Math.floor(menuPageCount / 2), fullscreenCycle.offset);
+      var batch = fullscreenVideoBatch(order, videoSlots, fullscreenCycle.offset);
       fullscreenCycle.nextOffset = batch.nextOffset;
       return batch.urls;
     }
@@ -959,11 +972,14 @@
 
     /* === APPLY DATA === */
     function buildDisplayPages(data) {
-      var menuPages = paginate(data.items);
-      if (window.MENU_LANG === 'both' && data.videoUrls && data.videoUrls.length) {
-        return interleaveVideoPages(menuPages, fullscreenVideosForMenuCycle(data.videoUrls, menuPages.length));
+      if (window.MENU_LANG === 'both') {
+        var bundles = Math.max(1, Number(data.bundlesBeforeVideo) || 3);
+        var slots = bilingualVideoSlots(data.items.length, bundles);
+        var clips = data.videoUrls && data.videoUrls.length
+          ? fullscreenVideosForMenuCycle(data.videoUrls, slots) : [];
+        return buildBilingualPages(data.items, bundles, clips);
       }
-      return menuPages;
+      return paginate(data.items);
     }
 
     function applyMenu(data, cached) {

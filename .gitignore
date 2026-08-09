@@ -11,3 +11,5 @@ node_modules/
 .herms/
 sketches/
 *.sha256.md
+# Local Sheets exports used only as rollback snapshots during migrations.
+backups/

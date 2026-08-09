@@ -138,6 +138,20 @@ function parseVideoUrls_(val) {
     });
 }
 
+function localizedText_(obj, lang) {
+  // `headers` is normalized to lower-case in readItemsFromSheet_, so language
+  // suffixes must be lower-case too: 'название (me)', not '(ME)'.
+  var suffix = lang === 'ru' ? '' : ' (' + lang + ')';
+  var description = lang === 'ru'
+    ? normalize_(obj['описание наше'] || obj['наше описание'] || obj['описание своё'] || obj['описание i-food'] || obj['описание ifood'] || obj['описание'] || '')
+    : normalize_(obj['описание' + suffix] || '');
+  return {
+    category: normalize_(obj['категория' + suffix] || (lang === 'ru' ? obj['категория'] : '') || ''),
+    name: normalize_(obj['название' + suffix] || (lang === 'ru' ? obj['название'] || obj['name'] : '') || ''),
+    description: description
+  };
+}
+
 function readItemsFromSheet_(menuSheet) {
   var data = menuSheet.getDataRange().getValues();
   if (data.length < 2) return [];
@@ -147,29 +161,22 @@ function readItemsFromSheet_(menuSheet) {
     var row = data[r];
     var obj = {};
     headers.forEach(function(h, c) { if (h) obj[h] = row[c]; });
-    var name = normalize_(obj['название'] || obj['name'] || '');
-    if (!name) continue;
-    // Visibility checkbox (K 'Показывать'): explicitly FALSE hides the item.
-    // Do NOT use `||` here: boolean false is a valid value and is falsy.
-    // Empty or TRUE shows it (backward compatible with pre-checkbox rows).
-    var showRaw = '';
-    if (Object.prototype.hasOwnProperty.call(obj, 'показывать')) showRaw = obj['показывать'];
-    else if (Object.prototype.hasOwnProperty.call(obj, 'show')) showRaw = obj['show'];
-    else if (Object.prototype.hasOwnProperty.call(obj, 'отображать')) showRaw = obj['отображать'];
+    var ru = localizedText_(obj, 'ru');
+    if (!ru.name) continue;
+    // Visibility checkbox: explicitly FALSE hides the item. Do not replace this
+    // with `||`: boolean false is a valid Sheets checkbox value.
+    var showRaw = Object.prototype.hasOwnProperty.call(obj, 'показывать') ? obj['показывать'] : '';
     if (showRaw === false || String(showRaw).toLowerCase() === 'false') continue;
-    // Description precedence: 'Описание наше' (J) wins, else 'Описание i-food' (C),
-    // else legacy 'Описание' (pre-split sheets).
-    var descOurs = normalize_(obj['описание наше'] || obj['наше описание'] || obj['описание своё'] || '');
-    var descIfood = normalize_(obj['описание i-food'] || obj['описание ifood'] || obj['описание'] || obj['description'] || '');
+    var languages = {ru: ru, me: localizedText_(obj, 'me'), en: localizedText_(obj, 'en'), de: localizedText_(obj, 'de')};
     items.push({
-      name: name,
-      category: normalize_(obj['категория'] || obj['category'] || ''),
+      languages: languages,
+      // Keep RU flat fields for API clients using ?lang=ru during the transition.
+      name: ru.name, category: ru.category, description: ru.description,
       price: normalize_(obj['цена'] || obj['price'] || ''),
       oldPrice: normalize_(obj['старая цена'] || obj['old price'] || ''),
-      description: descOurs || descIfood,
       badge: normalize_(obj['бейдж'] || obj['badge'] || ''),
       orderKey: normalize_(obj['порядок'] || obj['order'] || obj['sort'] || ''),
-      imageUrl: safeImageUrl_(obj['фото'] || obj['photo'] || obj['image'] || '') || (FALLBACK_IMAGES[name] ? CONFIG.GITHUB_ASSETS_BASE + 'images/' + FALLBACK_IMAGES[name] : '')
+      imageUrl: safeImageUrl_(obj['фото'] || obj['photo'] || obj['image'] || '') || (FALLBACK_IMAGES[ru.name] ? CONFIG.GITHUB_ASSETS_BASE + 'images/' + FALLBACK_IMAGES[ru.name] : '')
     });
   }
   return items;
@@ -178,74 +185,42 @@ function readItemsFromSheet_(menuSheet) {
 function readMenuItems_(lang) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var settingsSheet = ss.getSheetByName('SETTINGS');
-  var items = [];
-  var sourceName = '';
-  if (lang === 'both') {
-    // Merged mode: 3 RU dishes, then the SAME 3 ME dishes, then next 3 RU, etc.
-    var ruSheet = ss.getSheetByName(CONFIG.MENU_SHEET_NAME);
-    var meSheet = ss.getSheetByName(CONFIG.MENU_SHEET_ME);
-    var ruItems = ruSheet ? readItemsFromSheet_(ruSheet) : [];
-    var meItems = meSheet ? readItemsFromSheet_(meSheet) : [];
-    // Pair by order key (same dish in both languages), fallback to index.
-    var meByKey = {};
-    meItems.forEach(function(m, idx) { if (m.orderKey) meByKey[m.orderKey] = m; else meByKey['idx' + idx] = m; });
-    var CHUNK = 3;
-    for (var i = 0; i < ruItems.length; i += CHUNK) {
-      for (var j = i; j < Math.min(i + CHUNK, ruItems.length); j++) items.push(ruItems[j]);
-      for (var j2 = i; j2 < Math.min(i + CHUNK, ruItems.length); j2++) {
-        var meItem = (ruItems[j2].orderKey && meByKey[ruItems[j2].orderKey]) ? meByKey[ruItems[j2].orderKey] : meItems[j2];
-        if (meItem) items.push(meItem);
-      }
-    }
-    // Any ME items without a RU counterpart at the end
-    for (var k = 0; k < meItems.length; k++) {
-      var isPaired = false;
-      for (var p = 0; p < ruItems.length && !isPaired; p++) {
-        if (ruItems[p].orderKey && meItems[k].orderKey && ruItems[p].orderKey === meItems[k].orderKey) isPaired = true;
-        if (!ruItems[p].orderKey && !meItems[k].orderKey && p === k) isPaired = true;
-      }
-      if (!isPaired) items.push(meItems[k]);
-    }
-    sourceName = (ruSheet ? ruSheet.getName() : '') + ' + ' + (meSheet ? meSheet.getName() : '');
-  } else {
-    var sheetName = (lang === 'me') ? CONFIG.MENU_SHEET_ME : CONFIG.MENU_SHEET_NAME;
-    var menuSheet = ss.getSheetByName(sheetName) || ss.getSheetByName(CONFIG.MENU_SHEET_NAME);
-    if (!menuSheet) return { items: [], brand: CONFIG.DEFAULT_BRAND, lang: lang };
-    items = readItemsFromSheet_(menuSheet);
-    sourceName = menuSheet.getName();
-  }
+  var menuSheet = ss.getSheetByName(CONFIG.MENU_SHEET_NAME);
+  if (!menuSheet) return {items: [], brand: CONFIG.DEFAULT_BRAND, lang: lang};
+  var items = readItemsFromSheet_(menuSheet);
   var brand = CONFIG.DEFAULT_BRAND;
   var refreshSec = CONFIG.DEFAULT_REFRESH_SECONDS;
   var pageSec = 15;
   var videoSec = 10;
   var annSec = 8;
   var videoUrls = [];
+  var showCategories = true;
+  var bundlesBeforeVideo = 3;
   if (settingsSheet) {
     var sd = settingsSheet.getDataRange().getValues();
     for (var r = 1; r < sd.length; r++) {
       var key = normalize_(String(sd[r][0])).toLowerCase();
-      var val = normalize_(String(sd[r][1]));
-      if (!key || !val) continue;
-      if (key === 'название' || key === 'brand') brand = val;
-      if (key === 'обновление (сек)' || key === 'refresh') refreshSec = Math.min(parseInt(val) || 60, CONFIG.MAX_REFRESH_SECONDS);
-      if (key === 'перелистывание (сек)' || key === 'page') pageSec = parseInt(val) || 15;
-      if (key === 'видео интервал (сек)' || key === 'video seconds') videoSec = parseInt(val) || 10;
-      if (key === 'объявления (сек)' || key === 'announcements seconds') annSec = parseInt(val) || 8;
-      if (key === 'видео urls' || key === 'video_urls' || key === 'video' || key === 'видео') {
-        videoUrls = parseVideoUrls_(val);
-      }
+      var raw = sd[r][1];
+      var val = normalize_(String(raw));
+      if (!key) continue;
+      if (key === 'бренд' || key === 'название' || key === 'brand') brand = val || brand;
+      if (key === 'обновление сек' || key === 'обновление (сек)' || key === 'refresh') refreshSec = Math.min(parseInt(val, 10) || 60, CONFIG.MAX_REFRESH_SECONDS);
+      if (key === 'перелистывание сек' || key === 'перелистывание (сек)' || key === 'page') pageSec = parseInt(val, 10) || 15;
+      if (key === 'видео интервал (сек)' || key === 'video seconds') videoSec = parseInt(val, 10) || 10;
+      if (key === 'объявления (сек)' || key === 'announcements seconds') annSec = parseInt(val, 10) || 8;
+      if (key === 'показывать категории') showCategories = !(raw === false || String(raw).toLowerCase() === 'false');
+      if (key === 'наборов до видео') bundlesBeforeVideo = Math.max(1, parseInt(val, 10) || 3);
+      if (key === 'видео urls' || key === 'video_urls' || key === 'video' || key === 'видео') videoUrls = parseVideoUrls_(val);
     }
   }
-  // Fallback to config videos if no URLs from sheet
-  if (videoUrls.length === 0) {
-    videoUrls = CONFIG.FALLBACK_VIDEO_URLS;
-  }
+  if (videoUrls.length === 0) videoUrls = CONFIG.FALLBACK_VIDEO_URLS;
   return {
     items: items, brand: brand,
     refreshSeconds: refreshSec, pageSeconds: pageSec, videoSeconds: videoSec,
     announcements: readAnnouncements_(lang === 'both' ? 'ru' : lang), announcementSeconds: annSec,
     videoUrls: videoUrls, buildId: CONFIG.BUILD_ID,
-    sourceSheet: sourceName, lang: lang
+    sourceSheet: menuSheet.getName(), lang: lang,
+    showCategories: showCategories, bundlesBeforeVideo: bundlesBeforeVideo
   };
 }
 
