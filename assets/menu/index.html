@@ -409,8 +409,9 @@
   </div>
 
   <script>
-    var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260809-203642';
+    // v4 invalidates pre-multilingual flat RU/ME payloads in browser storage.
+    var CACHE_KEY = 'sb-v4-' + (window.MENU_LANG || 'ru');
+    var BUILD_ID  = 'gh-pages-20260809-204423';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */

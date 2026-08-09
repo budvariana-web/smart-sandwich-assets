@@ -409,7 +409,8 @@
   </div>
 
   <script>
-    var CACHE_KEY = 'sb-v3-' + (window.MENU_LANG || 'ru');
+    // v4 invalidates pre-multilingual flat RU/ME payloads in browser storage.
+    var CACHE_KEY = 'sb-v4-' + (window.MENU_LANG || 'ru');
     var BUILD_ID  = '%%BUILD_ID%%';
     var CARDS_PER_PAGE = 3;
 
