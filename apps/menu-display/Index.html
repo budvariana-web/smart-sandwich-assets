@@ -785,6 +785,25 @@
     var videoEls = {};     // url -> <video>
     var videoOrder = [];   // ordered urls
     var activeVideoUrl = '';
+    var videoShuffles = {}; // independent stable random orders: side/fullscreen
+
+    /* Fisher–Yates shuffle. An order is stable during a display session, so a
+       60-second data refresh cannot restart/repeat a clip. Adding/removing a
+       URL creates a new random order. Each distinct clip appears once before
+       any of them can repeat. */
+    function shuffledVideoUrls(urls, lane) {
+      var clean = (urls || []).filter(function(url) { return Boolean(url); });
+      var key = clean.slice().sort().join('\n');
+      var cached = videoShuffles[lane];
+      if (cached && cached.key === key) return cached.urls.slice();
+      var shuffled = clean.slice();
+      for (var i = shuffled.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = tmp;
+      }
+      videoShuffles[lane] = { key: key, urls: shuffled };
+      return shuffled.slice();
+    }
 
     function ensureVideoElements(urls) {
       var slot = $('video-slot');
@@ -918,7 +937,7 @@
       state.pages = paginate(data.items);
       /* In both mode: interleave fullscreen video pages after each RU+ME pair */
       if (window.MENU_LANG === 'both' && data.videoUrls && data.videoUrls.length) {
-        state.pages = interleaveVideoPages(state.pages, data.videoUrls);
+        state.pages = interleaveVideoPages(state.pages, shuffledVideoUrls(data.videoUrls, 'fullscreen'));
       }
       state.page = Math.min(prevPage, state.pages.length - 1);
       $('brand-name').textContent = data.brand || 'SMART SANDWICH BAR';
@@ -932,7 +951,7 @@
       scheduleRefresh();
 
       /* Video: ensure cached elements, then play */
-      var urls = data.videoUrls || [];
+      var urls = shuffledVideoUrls(data.videoUrls || [], 'side');
       ensureVideoElements(urls);
       if (videoOrder.length > 0) {
         playVideo(state.videoIndex >= videoOrder.length ? 0 : state.videoIndex);
