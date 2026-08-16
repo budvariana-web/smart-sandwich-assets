@@ -137,14 +137,14 @@
       height: 100%;
     }
 
-    /* Image zone: fixed share of card height (NOT aspect-ratio 1/1 — square
-       photo = card width, which on narrow/partial TV viewports pushed the
-       info block (and prices) below the screen edge) */
+    /* Two language blocks need substantially more room than a single-language
+       card. Keep the image present, but reserve the majority of the card for
+       readable menu information on a 1280×720 TV viewport. */
     .card-img {
       position: relative;
       width: 100%;
-      flex: 0 0 44%;
-      height: 44%;
+      flex: 0 0 22%;
+      height: 22%;
       flex-shrink: 0;
       overflow: hidden;
       background: var(--accent-soft);
@@ -155,19 +155,19 @@
       object-fit: contain;
     }
 
-    /* Info zone: two compact language blocks share the available height; price
-       stays pinned to the bottom even for the longest translated descriptions. */
+    /* Info zone: compact, fixed hierarchy for two complete language blocks.
+       Price stays pinned below the content without sacrificing the second text. */
     .card-info {
       display: flex; flex-direction: column;
-      padding: 16px 20px 18px;
-      gap: 7px;
+      padding: 10px 14px 11px;
+      gap: 4px;
       flex: 1;
       min-height: 0;
     }
     .card-category {
-      color: var(--accent); font-size: 11px; font-weight: 800;
-      text-transform: uppercase; letter-spacing: .1em;
-      line-height: 1.25; padding: 1px 0;
+      color: var(--accent); font-size: 10px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .08em;
+      line-height: 1.15; padding: 0;
       flex-shrink: 0;
     }
     .card-language-list {
@@ -176,16 +176,16 @@
     }
     .card-language-block {
       display: flex; flex-direction: column; flex: 1 1 0;
-      min-height: 0; overflow: hidden; padding: 3px 0;
+      min-height: 0; overflow: hidden; padding: 2px 0;
     }
     .card-language-block + .card-language-block {
-      border-top: 1px solid var(--line); padding-top: 8px;
+      border-top: 1px solid var(--line); padding-top: 5px;
     }
     .card-name {
-      font-size: 16px; font-weight: 900; line-height: 1.22;
+      font-size: 13px; font-weight: 900; line-height: 1.15;
       padding: 0; flex-shrink: 0;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2; overflow: hidden;
+      -webkit-line-clamp: 3; overflow: hidden;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
@@ -196,28 +196,28 @@
     }
     .card-desc-wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; }
     .card-desc {
-      color: var(--muted); font-size: 12px; line-height: 1.35;
+      color: var(--muted); font-size: 10px; line-height: 1.18;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 4; overflow: hidden;
+      -webkit-line-clamp: 9; overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
       margin-top: auto; padding-top: 2px; flex-shrink: 0;
     }
     .card-price {
-      color: var(--accent); font-weight: 900; font-size: 26px;
-      line-height: 1.2; padding: 1px 0;
+      color: var(--accent); font-weight: 900; font-size: 24px;
+      line-height: 1.1; padding: 0;
     }
     .card-old-price {
-      color: var(--muted); font-size: 15px; text-decoration: line-through;
-      line-height: 1.2;
+      color: var(--muted); font-size: 13px; text-decoration: line-through;
+      line-height: 1.1;
     }
 
     /* No-image placeholder */
     .card-no-img {
       width: 100%;
-      flex: 0 0 44%;
-      height: 44%;
+      flex: 0 0 22%;
+      height: 22%;
       flex-shrink: 0;
       background: linear-gradient(135deg, #e3f0fc, #f2f8fd);
       position: relative;
@@ -254,8 +254,8 @@
       border: 1px solid var(--line);
       box-shadow: 0 4px 18px rgba(30, 90, 160, .10);
       color: var(--text);
-      font-size: 24px; font-weight: 700;
-      line-height: 1.25;
+      font-size: 18px; font-weight: 700;
+      line-height: 1.15;
       overflow: hidden;
       position: relative;
     }
@@ -336,7 +336,9 @@
        unused lower-right margin rather than covering a card or drawing a bar. */
     .page-countdown {
       position: fixed; right: 24px; bottom: 16px; z-index: 100;
-      min-width: 76px; padding: 7px 11px 6px;
+      box-sizing: border-box;
+      display: flex; align-items: center; justify-content: center;
+      width: 102px; height: 38px; padding: 0 11px;
       border: 1px solid rgba(30, 136, 229, .28); border-radius: 9px;
       background: rgba(255, 255, 255, .93);
       box-shadow: 0 3px 12px rgba(30, 90, 160, .13);
