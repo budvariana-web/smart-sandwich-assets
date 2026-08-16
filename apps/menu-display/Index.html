@@ -332,12 +332,21 @@
       pointer-events: none;
     }
 
-    /* Timer bar */
-    .timer-bar {
-      position: fixed; bottom: 0; left: 0;
-      height: 3px; background: var(--accent);
-      z-index: 100; transition: width linear;
+    /* Digital countdown for the current menu-information page. It occupies the
+       unused lower-right margin rather than covering a card or drawing a bar. */
+    .page-countdown {
+      position: fixed; right: 24px; bottom: 16px; z-index: 100;
+      min-width: 76px; padding: 7px 11px 6px;
+      border: 1px solid rgba(30, 136, 229, .28); border-radius: 9px;
+      background: rgba(255, 255, 255, .93);
+      box-shadow: 0 3px 12px rgba(30, 90, 160, .13);
+      color: var(--accent); font-size: 20px; font-weight: 900;
+      line-height: 1; letter-spacing: .045em; text-align: center;
+      font-variant-numeric: tabular-nums;
+      opacity: 1; transition: opacity .2s;
+      pointer-events: none;
     }
+    .page-countdown.hidden { opacity: 0; }
 
     /* Fullscreen video page (between RU/ME cycles) */
     .fullscreen-video {
@@ -364,7 +373,7 @@
   </style>
 </head>
 <body>
-  <div class="timer-bar" id="timer-bar"></div>
+  <div class="page-countdown" id="page-countdown" aria-label="До смены меню">--:--</div>
   <div class="layout">
     <div class="products-zone">
       <header>
@@ -448,7 +457,8 @@
 
     var state = {
       data: null, pages: [], page: 0,
-      pageTimer: null, refreshTimer: null, videoTimer: null, annTimer: null, weatherTimer: null,
+      pageTimer: null, countdownTimer: null, pageDeadline: 0,
+      refreshTimer: null, videoTimer: null, annTimer: null, weatherTimer: null,
       videoIndex: 0, weather: null, weatherFailed: false
     };
 
@@ -720,29 +730,56 @@
       fullscreenVideoEl.pause();
     }
 
-    /* === PAGE TIMER === */
+    /* === PAGE TIMER + DIGITAL COUNTDOWN === */
+    function hidePageCountdown() {
+      clearInterval(state.countdownTimer);
+      state.countdownTimer = null;
+      state.pageDeadline = 0;
+      $('page-countdown').classList.add('hidden');
+    }
+
+    function updatePageCountdown() {
+      if (!state.pageDeadline) return;
+      var remaining = Math.max(0, state.pageDeadline - Date.now());
+      var seconds = Math.ceil(remaining / 1000);
+      var minutes = Math.floor(seconds / 60);
+      var secs = seconds % 60;
+      $('page-countdown').textContent = String(minutes).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function startPageCountdown(sec) {
+      clearInterval(state.countdownTimer);
+      state.pageDeadline = Date.now() + sec * 1000;
+      $('page-countdown').classList.remove('hidden');
+      updatePageCountdown();
+      state.countdownTimer = setInterval(updatePageCountdown, 250);
+    }
+
     function schedulePages() {
       /* Keep a running timer across data refreshes (applyMenu calls this every
          refreshSeconds) — resetting it makes pages linger 15–30 s unpredictably. */
       if (state.pageTimer) return;
       clearTimeout(state.pageTimer);
-      if (state.pages.length < 2) { $('timer-bar').style.width = '0'; return; }
-      var bar = $('timer-bar');
-      armPageTimer(bar);
+      if (state.pages.length < 2) { hidePageCountdown(); return; }
+      armPageTimer();
     }
 
-    function armPageTimer(bar) {
+    function armPageTimer() {
       clearTimeout(state.pageTimer);
-      bar.style.transition = 'none'; bar.style.width = '100%'; void bar.offsetWidth;
       var pg = state.pages[state.page];
       /* A one-file Blob is still downloading. Do not arm a duration-based
          timeout that could eject this page before its clip even starts. */
       if (pg && pg.video && state._videoWaiting) {
+        hidePageCountdown();
         state.pageTimer = null;
         return;
       }
       var sec = pageDurationSec();
-      bar.style.transition = 'width ' + sec + 's linear'; bar.style.width = '0%';
+      if (pg && pg.video) {
+        hidePageCountdown();
+      } else {
+        startPageCountdown(sec);
+      }
       /* A cached Blob is complete in RAM: `ended` is authoritative and no
          timer is needed. Preserve the old duration+15s failsafe solely for
          the exceptional direct-network fallback after a fetch error. */
@@ -772,7 +809,7 @@
         state.page++;
       }
       renderPage();
-      armPageTimer($('timer-bar'));
+      armPageTimer();
     }
 
     function pageDurationSec() {
@@ -796,7 +833,7 @@
       if (!isFinite(d) || d <= 0.5) return;
       if (state._videoDurSec && Math.abs(state._videoDurSec - d) < 0.3) return;
       state._videoDurSec = d;
-      armPageTimer($('timer-bar'));
+      armPageTimer();
     }
 
     /* Fullscreen clip: loop is off, so 'ended' fires when it finishes —
