@@ -137,14 +137,14 @@
       height: 100%;
     }
 
-    /* Two language blocks need substantially more room than a single-language
-       card. Keep the image present, but reserve the majority of the card for
-       readable menu information on a 1280×720 TV viewport. */
+    /* Three vertical product cards: photo first. The square media field is as
+       wide as the card, so square dish photos are large and complete. */
     .card-img {
       position: relative;
       width: 100%;
-      flex: 0 0 22%;
-      height: 22%;
+      flex: 0 0 auto;
+      height: auto;
+      aspect-ratio: 1 / 1;
       flex-shrink: 0;
       overflow: hidden;
       background: var(--accent-soft);
@@ -156,25 +156,13 @@
       object-fit: contain; object-position: center;
     }
 
-    /* The actual 70″ QLED panel renders a 3840×2160 CSS viewport. Give it a
-       square photo panel: square source photos then fill the full card width
-       while remaining completely visible. Compact TV viewports retain their
-       22% image allocation so the text and price stay TV-safe. */
-    @media (min-width: 3000px) {
-      .card-img, .card-no-img {
-        flex: 0 0 auto;
-        height: auto;
-        aspect-ratio: 1 / 1;
-      }
-    }
 
-    /* TV-readable hierarchy: use the spare card height for type rather than
-       shrinking text to fit every possible long translation. Price stays pinned
-       at the bottom; long copy is safely limited inside its own zone. */
+    /* TV-readable hierarchy: photo takes the top half; keep both languages
+       compact below it and pin the price at the bottom. */
     .card-info {
       display: flex; flex-direction: column;
-      padding: 12px 16px 13px;
-      gap: 5px;
+      padding: 7px 12px 9px;
+      gap: 2px;
       flex: 1;
       min-height: 0;
     }
@@ -199,7 +187,7 @@
       font-size: clamp(18px, .9vw, 34px); font-weight: 900; line-height: 1.18;
       padding: 0; flex-shrink: 0;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2; overflow: hidden;
+      -webkit-line-clamp: 1; overflow: hidden;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
@@ -212,7 +200,7 @@
     .card-desc {
       color: var(--muted); font-size: clamp(13px, .6vw, 23px); line-height: 1.25;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 5; overflow: hidden;
+      -webkit-line-clamp: 1; overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
@@ -230,8 +218,9 @@
     /* No-image placeholder */
     .card-no-img {
       width: 100%;
-      flex: 0 0 22%;
-      height: 22%;
+      flex: 0 0 auto;
+      height: auto;
+      aspect-ratio: 1 / 1;
       flex-shrink: 0;
       background: linear-gradient(135deg, #e3f0fc, #f2f8fd);
       position: relative;
@@ -559,8 +548,16 @@
     function itemMarkup(item, pair, showCategories) {
       var imageUrl = String(item.imageUrl || '');
       var hasImage = imageUrl.indexOf('https://') === 0;
+      /* Hosted dish photos have two deliberate responsive derivatives: 640w
+         for 720p/1080p cards and 1280w for native 4K. Do not download a 4K
+         source into a ~270px card just because it is available. */
+      var isHostedMenuImage = imageUrl.indexOf('/assets/menu/images/item-') !== -1;
+      var smallImageUrl = isHostedMenuImage ? imageUrl.replace('/images/', '/images/640/') : '';
+      var responsiveAttrs = isHostedMenuImage
+        ? ' srcset="' + escapeText(smallImageUrl) + ' 640w, ' + escapeText(imageUrl) + ' 1280w" sizes="(min-width: 3000px) 25vw, 25vw"'
+        : '';
       var imgHtml = hasImage
-        ? '<div class="card-img"><img src="' + escapeText(imageUrl) + '" alt="" loading="lazy"></div>'
+        ? '<div class="card-img"><img src="' + escapeText(imageUrl) + '"' + responsiveAttrs + ' alt="" loading="lazy" decoding="async"></div>'
         : '<div class="card-no-img"></div>';
       var languages = item.languages || {ru: item};
       var first = languages[pair[0]] || languages.ru || item;
