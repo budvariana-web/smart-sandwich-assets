@@ -120,8 +120,16 @@ python add_visibility_column.py    # K «Показывать» чекбоксы
 
 # E2E видео-цикла (both): длительность ролика, переход не на 1-ю страницу,
 # позиция после рефреша. ~2.5 мин (ждёт первый ролик + рефреш 60с)
-python video_cycle_test.py
+python tools/video-panel/video_cycle_test.py
 ```
+
+## Рабочая структура tooling и артефактов
+
+- `tools/video-panel/` — video probes, E2E/regression checks и browser verification для боковой/полноэкранной видео-панели.
+- `tools/brochures/` — генераторы печатного меню и буклетов. Они определяют root относительно `__file__`; запускать из любого текущего каталога.
+- `artifacts/brochures/` — публикуемые PDF; временные PNG и `.brochure-image-cache/` лежат рядом и игнорируются Git.
+- `artifacts/certificates/` — локальные сертификаты и preview; весь каталог игнорируется Git.
+- Не возвращать generated PDF/PNG, cache или video tooling в project root. При добавлении новой утилиты выбирать один из этих каталогов и обновлять соответствующие команды/документацию.
 
 ## 7. Многоязычные карточки и видео-страницы (v90+)
 

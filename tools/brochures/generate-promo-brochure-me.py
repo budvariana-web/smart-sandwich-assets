@@ -11,10 +11,11 @@ from collections import defaultdict
 import requests
 from fpdf import FPDF
 
-ROOT = Path(r"C:/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar")
+ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT / "menu-data.json"
-OUT = ROOT / "smart-sandwich-bar-brochure-a4.pdf"
-CACHE = ROOT / ".brochure-image-cache"
+ARTIFACTS = ROOT / 'artifacts' / 'brochures'
+OUT = ARTIFACTS / "smart-sandwich-bar-brochure-a4-mne.pdf"
+CACHE = ARTIFACTS / ".brochure-image-cache"
 FONT_DIR = Path(r"C:/Windows/Fonts")
 
 NAVY = (21, 48, 70)
@@ -164,8 +165,8 @@ class Brochure(FPDF):
 
 def main() -> None:
     data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
-    # The live endpoint temporarily contains RU + Montenegrin duplicates. Use the source RU menu only.
-    items = [x for x in data["items"] if re.search(r"[А-Яа-яЁё]", x.get("category", ""))]
+    # Use the Latin-script Montenegrin duplicate of the live menu.
+    items = [x for x in data["items"] if not re.search(r"[А-Яа-яЁё]", x.get("category", ""))]
     images = download_images(items)
     grouped = defaultdict(list)
     for item in items:
@@ -183,7 +184,7 @@ def main() -> None:
     pdf.ellipse(128, 24, 118, 118, "F")
     pdf.ellipse(-44, 202, 148, 110, "F")
     # Three product photo windows.
-    cover_items = [grouped["Бургеры"][0], grouped["Сэндвичи"][0], grouped["Закуски"][0]]
+    cover_items = [grouped["Burgeri"][0], grouped["Sendviči"][0], grouped["Predjela"][0]]
     for item, x, y, w, h in [(cover_items[0], 113, 42, 77, 55), (cover_items[1], 22, 166, 73, 51), (cover_items[2], 111, 195, 68, 47)]:
         pdf.set_fill_color(*WHITE)
         pdf.rect(x - 2, y - 2, w + 4, h + 4, "F")
@@ -195,37 +196,37 @@ def main() -> None:
     pdf.set_font("Arial", "B", 11)
     pdf.set_text_color(183, 221, 248)
     pdf.set_xy(18, 81)
-    pdf.cell(90, 6, "бургеры • сэндвичи • итальянские закуски")
+    pdf.cell(90, 6, "burgeri • sendviči • italijanska predjela")
     pdf.set_font("Arial", "", 10)
     pdf.set_text_color(*WHITE)
     pdf.set_xy(18, 107)
-    pdf.multi_cell(83, 5.2, "Свежая выпечка, авторские соусы и яркие вкусы — готовим в самом сердце Бара.")
+    pdf.multi_cell(83, 5.2, "Svježa peciva, autorski sosovi i bogati ukusi — pripremamo u srcu Bara.")
     pdf.set_fill_color(*ORANGE)
     pdf.rect(17, 130, 72, 12, "F")
     pdf.set_font("Arial", "B", 9)
     pdf.set_text_color(*WHITE)
     pdf.set_xy(20, 133.5)
-    pdf.cell(66, 4, "МЕНЮ И ЦЕНЫ • 2026", align="C")
+    pdf.cell(66, 4, "MENI I CIJENE • 2026", align="C")
     pdf.set_font("Arial", "", 8)
     pdf.set_text_color(183, 221, 248)
     pdf.set_xy(17, 269)
     pdf.cell(160, 5, "Bar, Crna Gora   •   @smartsandwichbar")
     pdf.set_font("Arial", "B", 7)
     pdf.set_xy(17, 278)
-    pdf.cell(176, 4, "ПОКАЗЫВАЙТЕ ЭТУ БРОШЮРУ ДРУЗЬЯМ — ВКУСНЕЕ ВМЕСТЕ", align="C")
+    pdf.cell(176, 4, "PODIJELITE OVAJ MENI SA PRIJATELJIMA — UKUS JE BOLJI ZAJEDNO", align="C")
 
     # --- PAGE 2: BURGERS + first sandwiches ---
     pdf.add_page()
-    pdf.header_band("Бургеры и сэндвичи", "Домашняя булочка бриош, свежие продукты и фирменные соусы", 2)
-    y = pdf.section_title("Бургеры", 12, 35, "горячие • сытные • приготовлены с характером")
-    for idx, item in enumerate(grouped["Бургеры"]):
+    pdf.header_band("Burgeri i sendviči", "Domaće brioche pecivo, svježi sastojci i autorski sosovi", 2)
+    y = pdf.section_title("Burgeri", 12, 35, "topli • zasitni • pripremljeni s karakterom")
+    for idx, item in enumerate(grouped["Burgeri"]):
         x = 12 + (idx % 2) * 95
         if idx and idx % 2 == 0:
             y += 40
         pdf.product_card(item, images.get(item["name"]), x, y)
     y += 45
-    y = pdf.section_title("Сэндвичи", 12, y, "на чиабатте и фокачче")
-    for idx, item in enumerate(grouped["Сэндвичи"][:3]):
+    y = pdf.section_title("Sendviči", 12, y, "na ciabatti i fokači")
+    for idx, item in enumerate(grouped["Sendviči"][:3]):
         x = 12 + (idx % 2) * 95
         yy = y + (idx // 2) * 40
         pdf.product_card(item, images.get(item["name"]), x, yy)
@@ -233,16 +234,16 @@ def main() -> None:
 
     # --- PAGE 3: remaining sandwiches + Italian bites ---
     pdf.add_page()
-    pdf.header_band("Сэндвичи и итальянские вкусы", "Тёплые, хрустящие, с щедрой начинкой", 3)
-    y = pdf.section_title("Сэндвичи", 12, 35, "продолжение")
-    rest = grouped["Сэндвичи"][3:]
+    pdf.header_band("Sendviči i italijanski ukusi", "Topli, hrskavi, s obilnim punjenjem", 3)
+    y = pdf.section_title("Sendviči", 12, 35, "nastavak")
+    rest = grouped["Sendviči"][3:]
     for idx, item in enumerate(rest):
         x = 12 + (idx % 2) * 95
         yy = y + (idx // 2) * 40
         pdf.product_card(item, images.get(item["name"]), x, yy)
     y += 80
-    y = pdf.section_title("Брускеты и фокачча", 12, y, "идеально к кофе или как лёгкая закуска")
-    italian = grouped["Брускеты"] + grouped["Фокачча"]
+    y = pdf.section_title("Bruskete i fokača", 12, y, "idealno uz kafu ili kao lagani zalogaj")
+    italian = grouped["Bruskete"] + grouped["Fokača"]
     for idx, item in enumerate(italian):
         x = 12 + (idx % 2) * 95
         yy = y + (idx // 2) * 40
@@ -251,20 +252,20 @@ def main() -> None:
 
     # --- PAGE 4: snacks, drinks, sauces ---
     pdf.add_page()
-    pdf.header_band("Закуски, сладкое и дополнения", "Добавьте к заказу то, что сделает его особенным", 4)
-    y = pdf.section_title("Закуски", 12, 35, "золотистые, хрустящие, к любому настроению")
-    for item in grouped["Закуски"]:
+    pdf.header_band("Predjela, slatko i dodaci", "Dodajte porudžbini ono što je čini posebnom", 4)
+    y = pdf.section_title("Predjela", 12, 35, "zlatna, hrskava, za svako raspoloženje")
+    for item in grouped["Predjela"]:
         pdf.compact_row(item, images.get(item["name"]), 12, y)
         y += 21
     y += 3
-    y = pdf.section_title("Хлеб и десерт", 12, y)
-    for item in grouped["Хлеб"] + grouped["Десерты"]:
+    y = pdf.section_title("Hljeb i dezert", 12, y)
+    for item in grouped["Hljeb"] + grouped["Dezerti"]:
         pdf.compact_row(item, images.get(item["name"]), 12, y)
         y += 21
     y += 3
-    y = pdf.section_title("Соусы", 12, y, "маленькие дополнения — большая разница")
+    y = pdf.section_title("Sosovi", 12, y, "mali dodaci — velika razlika")
     # Condiments in a concise price grid so all products fit on the back page.
-    sauces = grouped["Соусы"]
+    sauces = grouped["Umaci"]
     for idx, item in enumerate(sauces):
         x = 12 + (idx % 2) * 95
         pdf.set_fill_color(*PALE)
@@ -278,22 +279,19 @@ def main() -> None:
         if idx % 2:
             y += 14
     y += 4
-    for item in grouped["Напитки"]:
-        pdf.compact_row(item, images.get(item["name"]), 12, y)
-        y += 21
     pdf.set_fill_color(*NAVY)
     pdf.rect(12, 257, 186, 18, "F")
     pdf.set_font("Arial", "B", 10)
     pdf.set_text_color(*WHITE)
     pdf.set_xy(18, 261)
-    pdf.cell(174, 5, "ЗАКАЗЫВАЙТЕ ЛЮБИМЫЕ ВКУСЫ В SMART SANDWICH BAR", align="C")
+    pdf.cell(174, 5, "NARUČITE SVOJE OMILJENE UKUSE U SMART SANDWICH BARU", align="C")
     pdf.set_font("Arial", "", 7.5)
     pdf.set_text_color(183, 221, 248)
     pdf.set_xy(18, 267)
-    pdf.cell(174, 4, "Бургеры • сэндвичи • закуски • кофе", align="C")
+    pdf.cell(174, 4, "Burgeri • sendviči • predjela • kafa", align="C")
     pdf.footer()
 
-    pdf.set_title("Smart Sandwich Bar — рекламная брошюра")
+    pdf.set_title("Smart Sandwich Bar — promotivna brošura")
     pdf.set_author("Smart Sandwich Bar")
     pdf.output(str(OUT))
     print(f"PDF saved: {OUT}")

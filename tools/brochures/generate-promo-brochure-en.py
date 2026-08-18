@@ -11,10 +11,11 @@ from collections import defaultdict
 import requests
 from fpdf import FPDF
 
-ROOT = Path(r"C:/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar")
+ROOT = Path(__file__).resolve().parents[2]
 DATA_PATH = ROOT / "menu-data-en.json"
-OUT = ROOT / "smart-sandwich-bar-brochure-a4-en.pdf"
-CACHE = ROOT / ".brochure-image-cache"
+ARTIFACTS = ROOT / 'artifacts' / 'brochures'
+OUT = ARTIFACTS / "smart-sandwich-bar-brochure-a4-en.pdf"
+CACHE = ARTIFACTS / ".brochure-image-cache"
 FONT_DIR = Path(r"C:/Windows/Fonts")
 
 NAVY = (21, 48, 70)

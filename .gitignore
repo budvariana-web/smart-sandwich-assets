@@ -13,3 +13,7 @@ sketches/
 *.sha256.md
 # Local Sheets exports used only as rollback snapshots during migrations.
 backups/
+# Generated print previews/cache are local artifacts, never source files.
+/artifacts/brochures/.brochure-image-cache/
+/artifacts/brochures/*.png
+/artifacts/certificates/

@@ -8,7 +8,7 @@ Checks:
   3. After a data refresh (refreshSeconds=60), the page position is kept
      (page-count != "1 / 25" ~75s in).
 
-Usage: python video_cycle_test.py
+Usage (from project root): python tools/video-panel/video_cycle_test.py
 """
 import json
 import os

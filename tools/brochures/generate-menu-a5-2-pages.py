@@ -5,9 +5,9 @@ from collections import defaultdict
 from pathlib import Path
 from fpdf import FPDF
 
-ROOT=Path(r"C:/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar")
-OUT=ROOT/"smart-sandwich-bar-menu-a5-2-pages.pdf"
-FONT=Path(r"C:/Windows/Fonts")
+ROOT = Path(__file__).resolve().parents[2]
+OUT = ROOT / 'artifacts' / 'brochures' / 'smart-sandwich-bar-menu-a5-2-pages.pdf'
+FONT = Path(r"C:/Windows/Fonts")
 NAVY=(21,48,70); BLUE=(30,136,229); PALE=(234,245,253); INK=(35,54,68); MUTED=(104,124,139); ORANGE=(239,137,55); WHITE=(255,255,255)
 
 class MenuA5(FPDF):

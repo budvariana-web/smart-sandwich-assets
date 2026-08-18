@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Reproduce fullscreen-video buffering under a constrained connection.
-Usage: python throttled_video_probe.py [kbps=1000] [seconds=55] [prewarm_seconds=0] [target_filename_part]
+Usage (from project root): python tools/video-panel/throttled_video_probe.py [kbps=1000] [seconds=55] [prewarm_seconds=0] [target_filename_part]
 Uses CDP throttling; optional prewarm keeps menu pages visible so v79's one
 look-ahead video element can fill its buffer before the fullscreen page.
 """

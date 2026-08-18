@@ -1,6 +1,11 @@
 """Generate A4 PDF menu for Smart Sandwich Bar — 2 columns, 1 page."""
 import json, os, requests, tempfile
+from pathlib import Path
 from fpdf import FPDF
+
+ROOT = Path(__file__).resolve().parents[2]
+ARTIFACTS = ROOT / 'artifacts' / 'brochures'
+ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
 WHITE = (255, 255, 255)
 LIGHT_BLUE = (220, 235, 245)
@@ -9,7 +14,7 @@ DARK_BLUE = (40, 70, 100)
 SOFT_GRAY = (120, 130, 140)
 WARM_BROWN = (80, 60, 50)
 
-with open("C:/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar/menu-data.json", "r", encoding="utf-8") as f:
+with open(ROOT / "menu-data.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 
 items = data["items"]
@@ -291,6 +296,6 @@ pdf.cell(0, 8, "smart-sandwich-bar.me  •  @smartsandwichbar", align="C")
 for i in range(10):
     pdf.draw_paw(20 + i * 17, 289, 1.2)
 
-output = "C:/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar/smart-sandwich-menu.pdf"
-pdf.output(output)
+output = ARTIFACTS / "smart-sandwich-menu.pdf"
+pdf.output(str(output))
 print(f"PDF saved: {output}  ({pdf.pages_count} page)")

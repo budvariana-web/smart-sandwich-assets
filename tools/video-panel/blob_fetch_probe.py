@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Measure full JS fetch-to-Blob time under CDP network throttling.
-Usage: python blob_fetch_probe.py [kbps] [filename]
+Usage (from project root): python tools/video-panel/blob_fetch_probe.py [kbps] [filename]
 """
 import json, sys, time
 from playwright.sync_api import sync_playwright

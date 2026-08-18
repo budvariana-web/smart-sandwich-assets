@@ -6,9 +6,10 @@ from collections import defaultdict
 import requests
 from fpdf import FPDF
 
-ROOT = Path(r"C:/Users/Asus/AppData/Local/hermes/projects/smart-sandwich-bar")
-OUT = ROOT / "smart-sandwich-bar-brochure-a5.pdf"
-CACHE = ROOT / ".brochure-image-cache"
+ROOT = Path(__file__).resolve().parents[2]
+ARTIFACTS = ROOT / 'artifacts' / 'brochures'
+OUT = ARTIFACTS / "smart-sandwich-bar-brochure-a5.pdf"
+CACHE = ARTIFACTS / ".brochure-image-cache"
 FONT = Path(r"C:/Windows/Fonts")
 NAVY=(21,48,70); BLUE=(30,136,229); PALE=(233,244,253); MIST=(247,251,254); INK=(35,54,68); MUTED=(103,123,138); ORANGE=(239,137,55); WHITE=(255,255,255)
 
