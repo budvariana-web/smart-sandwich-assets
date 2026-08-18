@@ -155,19 +155,20 @@
       object-fit: contain;
     }
 
-    /* Info zone: compact, fixed hierarchy for two complete language blocks.
-       Price stays pinned below the content without sacrificing the second text. */
+    /* TV-readable hierarchy: use the spare card height for type rather than
+       shrinking text to fit every possible long translation. Price stays pinned
+       at the bottom; long copy is safely limited inside its own zone. */
     .card-info {
       display: flex; flex-direction: column;
-      padding: 10px 14px 11px;
-      gap: 4px;
+      padding: 12px 16px 13px;
+      gap: 5px;
       flex: 1;
       min-height: 0;
     }
     .card-category {
-      color: var(--accent); font-size: 10px; font-weight: 800;
-      text-transform: uppercase; letter-spacing: .08em;
-      line-height: 1.15; padding: 0;
+      color: var(--accent); font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .07em;
+      line-height: 1.2; padding: 0;
       flex-shrink: 0;
     }
     .card-language-list {
@@ -182,10 +183,10 @@
       border-top: 1px solid var(--line); padding-top: 5px;
     }
     .card-name {
-      font-size: 13px; font-weight: 900; line-height: 1.15;
+      font-size: 18px; font-weight: 900; line-height: 1.18;
       padding: 0; flex-shrink: 0;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3; overflow: hidden;
+      -webkit-line-clamp: 2; overflow: hidden;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
@@ -196,21 +197,21 @@
     }
     .card-desc-wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; }
     .card-desc {
-      color: var(--muted); font-size: 10px; line-height: 1.18;
+      color: var(--muted); font-size: 13px; line-height: 1.25;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 9; overflow: hidden;
+      -webkit-line-clamp: 5; overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
-      margin-top: auto; padding-top: 2px; flex-shrink: 0;
+      margin-top: auto; padding-top: 4px; flex-shrink: 0;
     }
     .card-price {
-      color: var(--accent); font-weight: 900; font-size: 24px;
-      line-height: 1.1; padding: 0;
+      color: var(--accent); font-weight: 900; font-size: 30px;
+      line-height: 1.12; padding: 0;
     }
     .card-old-price {
-      color: var(--muted); font-size: 13px; text-decoration: line-through;
-      line-height: 1.1;
+      color: var(--muted); font-size: 16px; text-decoration: line-through;
+      line-height: 1.12;
     }
 
     /* No-image placeholder */
@@ -254,8 +255,8 @@
       border: 1px solid var(--line);
       box-shadow: 0 4px 18px rgba(30, 90, 160, .10);
       color: var(--text);
-      font-size: 18px; font-weight: 700;
-      line-height: 1.15;
+      font-size: 22px; font-weight: 700;
+      line-height: 1.2;
       overflow: hidden;
       position: relative;
     }
