@@ -152,9 +152,20 @@
     .card-img img {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       width: 100%; height: 100%;
-      /* Fill the menu card width. Food stays centred; any crop is limited to
-         the vertical excess rather than leaving empty side fields. */
-      object-fit: cover; object-position: center;
+      /* A menu photo is product information: show it completely, never crop it. */
+      object-fit: contain; object-position: center;
+    }
+
+    /* The actual 70″ QLED panel renders a 3840×2160 CSS viewport. Give it a
+       square photo panel: square source photos then fill the full card width
+       while remaining completely visible. Compact TV viewports retain their
+       22% image allocation so the text and price stay TV-safe. */
+    @media (min-width: 3000px) {
+      .card-img, .card-no-img {
+        flex: 0 0 auto;
+        height: auto;
+        aspect-ratio: 1 / 1;
+      }
     }
 
     /* TV-readable hierarchy: use the spare card height for type rather than
@@ -425,7 +436,7 @@
   <script>
     // v4 invalidates pre-multilingual flat RU/ME payloads in browser storage.
     var CACHE_KEY = 'sb-v4-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260818-180752';
+    var BUILD_ID  = 'gh-pages-20260818-182451';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */

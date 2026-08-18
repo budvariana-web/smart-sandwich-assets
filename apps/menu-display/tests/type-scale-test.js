@@ -24,5 +24,6 @@ responsiveMin('.announcement', 22);
 
 const imageRule = html.match(/\.card-img img\s*\{[^}]*?object-fit:\s*([^;]+);/s);
 assert.ok(imageRule, 'Missing image presentation rule');
-assert.strictEqual(imageRule[1].trim(), 'cover', 'Dish image must fill the card width without contain letterboxing');
+assert.strictEqual(imageRule[1].trim(), 'contain', 'Base layout must preserve the complete dish image');
+assert.match(html, /@media \(min-width: 3000px\)[\s\S]*?\.card-img,\s*\.card-no-img\s*\{[\s\S]*?aspect-ratio:\s*1\s*\/\s*1;/, '4K layout must allocate a square full-width image zone');
 console.log('TV type scale: OK');
