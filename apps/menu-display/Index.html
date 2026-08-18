@@ -152,7 +152,9 @@
     .card-img img {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       width: 100%; height: 100%;
-      object-fit: contain;
+      /* Fill the menu card width. Food stays centred; any crop is limited to
+         the vertical excess rather than leaving empty side fields. */
+      object-fit: cover; object-position: center;
     }
 
     /* TV-readable hierarchy: use the spare card height for type rather than

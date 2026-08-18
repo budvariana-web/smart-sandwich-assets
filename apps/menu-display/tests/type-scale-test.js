@@ -21,4 +21,8 @@ responsiveMin('.card-name', 18);
 responsiveMin('.card-desc', 13);
 responsiveMin('.card-price', 30);
 responsiveMin('.announcement', 22);
+
+const imageRule = html.match(/\.card-img img\s*\{[^}]*?object-fit:\s*([^;]+);/s);
+assert.ok(imageRule, 'Missing image presentation rule');
+assert.strictEqual(imageRule[1].trim(), 'cover', 'Dish image must fill the card width without contain letterboxing');
 console.log('TV type scale: OK');

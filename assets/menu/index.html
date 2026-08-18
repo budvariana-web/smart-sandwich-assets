@@ -152,7 +152,9 @@
     .card-img img {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       width: 100%; height: 100%;
-      object-fit: contain;
+      /* Fill the menu card width. Food stays centred; any crop is limited to
+         the vertical excess rather than leaving empty side fields. */
+      object-fit: cover; object-position: center;
     }
 
     /* TV-readable hierarchy: use the spare card height for type rather than
@@ -423,7 +425,7 @@
   <script>
     // v4 invalidates pre-multilingual flat RU/ME payloads in browser storage.
     var CACHE_KEY = 'sb-v4-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260818-173421';
+    var BUILD_ID  = 'gh-pages-20260818-180752';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
