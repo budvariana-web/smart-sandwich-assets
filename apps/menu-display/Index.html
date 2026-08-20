@@ -75,10 +75,10 @@
     .layout {
       display: grid;
       grid-template-columns: 3fr 1fr;
-      /* calc(100vh - 85px) + 50px bottom margin: keeps content clear of TV
-         browser panels/address bars and overscan/zoom crop at the bottom */
-      height: calc(100vh - 85px);
-      margin: 35px 30px 50px;
+      /* 16px bottom safe-gap is sufficient for the status line; the reclaimed
+         34px belongs to the product cards so both descriptions remain complete. */
+      height: calc(100vh - 51px);
+      margin: 35px 30px 16px;
       padding: 20px 30px;
       gap: 20px;
     }
@@ -183,6 +183,12 @@
     .card-language-block + .card-language-block {
       border-top: 1px solid var(--line); padding-top: 5px;
     }
+    /* The second translated title repeats the product name and displaces its
+       ingredients. Keep the primary title prominent; reserve the second block
+       for the translated composition itself. */
+    .card-language-block + .card-language-block .card-name {
+      display: none;
+    }
     .card-name {
       /* Glock's bold glyph box rises above a conventional 1.16 line box.
          Keep the title's two-line clamp, but give ascenders a real top/bottom
@@ -206,7 +212,7 @@
       color: var(--muted); font-size: clamp(16px, .82vw, 30px); line-height: 1.28;
       overflow-wrap: break-word;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3; overflow: hidden;
+      -webkit-line-clamp: 4; overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
@@ -246,7 +252,7 @@
       }
       .card-category { font-size: 14px; }
       .card-name { font-size: 20px; -webkit-line-clamp: 1; }
-      .card-desc { font-size: 14px; line-height: 1.25; -webkit-line-clamp: 2; }
+      .card-desc { font-size: 14px; line-height: 1.25; -webkit-line-clamp: 4; }
     }
 
     .empty {
