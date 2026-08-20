@@ -16,9 +16,9 @@ function responsiveMin(selector, minimum) {
   assert.match(rule, new RegExp(`^clamp\\(${minimum}px,`), `${selector} must preserve a ${minimum}px 720p minimum and scale for 4K`);
 }
 
-responsiveMin('.card-category', 12);
-responsiveMin('.card-name', 18);
-responsiveMin('.card-desc', 13);
+responsiveMin('.card-category', 16);
+responsiveMin('.card-name', 24);
+responsiveMin('.card-desc', 16);
 responsiveMin('.card-price', 30);
 responsiveMin('.announcement', 22);
 
@@ -26,7 +26,8 @@ const imageRule = html.match(/\.card-img img\s*\{[^}]*?object-fit:\s*([^;]+);/s)
 assert.ok(imageRule, 'Missing image presentation rule');
 assert.strictEqual(imageRule[1].trim(), 'contain', 'Base layout must preserve the complete dish image');
 assert.match(html, /\.card-img\s*\{[^}]*?flex:\s*0 0 auto;[^}]*?aspect-ratio:\s*1\s*\/\s*1;/s, 'Every dish card must reserve a square full-width image zone');
-assert.match(html, /\.card-no-img\s*\{[^}]*?flex:\s*0 0 auto;[^}]*?aspect-ratio:\s*1\s*\/\s*1;/s, 'The no-image placeholder must keep the same card geometry');
-assert.match(html, /\.card-name\s*\{[\s\S]*?-webkit-line-clamp:\s*1;/, 'Names must use one compact line per language block');
-assert.match(html, /\.card-desc\s*\{[\s\S]*?-webkit-line-clamp:\s*1;/, 'Descriptions must use one compact line per language block');
+assert.match(html, /@media \(max-width: 1500px\)[\s\S]*?\.card-img,\s*\.card-no-img\s*\{[\s\S]*?aspect-ratio:\s*4\s*\/\s*3;/, 'Compact TV mode must preserve price room with a full 4:3 image field');
+assert.match(html, /\.card-name\s*\{[\s\S]*?-webkit-line-clamp:\s*2;/, 'Names must have room for two readable lines per language block');
+assert.match(html, /\.card-desc\s*\{[\s\S]*?-webkit-line-clamp:\s*3;/, 'Descriptions must wrap across three readable lines per language block');
+assert.match(html, /\.card-desc\s*\{[\s\S]*?overflow-wrap:\s*break-word;/, 'Descriptions must wrap long words safely');
 console.log('TV type scale: OK');

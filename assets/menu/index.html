@@ -167,7 +167,7 @@
       min-height: 0;
     }
     .card-category {
-      color: var(--accent); font-size: clamp(12px, .52vw, 20px); font-weight: 800;
+      color: var(--accent); font-size: clamp(16px, .72vw, 28px); font-weight: 800;
       text-transform: uppercase; letter-spacing: .07em;
       line-height: 1.2; padding: 0;
       flex-shrink: 0;
@@ -184,10 +184,10 @@
       border-top: 1px solid var(--line); padding-top: 5px;
     }
     .card-name {
-      font-size: clamp(18px, .9vw, 34px); font-weight: 900; line-height: 1.18;
+      font-size: clamp(24px, 1.2vw, 44px); font-weight: 900; line-height: 1.16;
       padding: 0; flex-shrink: 0;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 1; overflow: hidden;
+      -webkit-line-clamp: 2; overflow: hidden;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
@@ -198,9 +198,10 @@
     }
     .card-desc-wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; }
     .card-desc {
-      color: var(--muted); font-size: clamp(13px, .6vw, 23px); line-height: 1.25;
+      color: var(--muted); font-size: clamp(16px, .82vw, 30px); line-height: 1.28;
+      overflow-wrap: break-word;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 1; overflow: hidden;
+      -webkit-line-clamp: 3; overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
@@ -229,6 +230,18 @@
       content: '';
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(30,90,160,.03) 8px, rgba(30,90,160,.03) 16px);
+    }
+
+    /* A 1280×720 TV viewport cannot hold a square photo, two large language
+       sections and a pinned price. Keep the dish complete in a still-large 4:3
+       field, while preserving readable text and the price. */
+    @media (max-width: 1500px) {
+      .card-img, .card-no-img {
+        aspect-ratio: 4 / 3;
+      }
+      .card-category { font-size: 14px; }
+      .card-name { font-size: 20px; -webkit-line-clamp: 1; }
+      .card-desc { font-size: 14px; line-height: 1.25; -webkit-line-clamp: 2; }
     }
 
     .empty {
@@ -425,7 +438,7 @@
   <script>
     // v4 invalidates pre-multilingual flat RU/ME payloads in browser storage.
     var CACHE_KEY = 'sb-v4-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260818-184300';
+    var BUILD_ID  = 'gh-pages-20260820-152925';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
@@ -548,8 +561,16 @@
     function itemMarkup(item, pair, showCategories) {
       var imageUrl = String(item.imageUrl || '');
       var hasImage = imageUrl.indexOf('https://') === 0;
+      /* Hosted dish photos have two deliberate responsive derivatives: 640w
+         for 720p/1080p cards and 1280w for native 4K. Do not download a 4K
+         source into a ~270px card just because it is available. */
+      var isHostedMenuImage = imageUrl.indexOf('/assets/menu/images/item-') !== -1;
+      var smallImageUrl = isHostedMenuImage ? imageUrl.replace('/images/', '/images/640/') : '';
+      var responsiveAttrs = isHostedMenuImage
+        ? ' srcset="' + escapeText(smallImageUrl) + ' 640w, ' + escapeText(imageUrl) + ' 1280w" sizes="(min-width: 3000px) 25vw, 25vw"'
+        : '';
       var imgHtml = hasImage
-        ? '<div class="card-img"><img src="' + escapeText(imageUrl) + '" alt="" loading="lazy"></div>'
+        ? '<div class="card-img"><img src="' + escapeText(imageUrl) + '"' + responsiveAttrs + ' alt="" loading="lazy" decoding="async"></div>'
         : '<div class="card-no-img"></div>';
       var languages = item.languages || {ru: item};
       var first = languages[pair[0]] || languages.ru || item;

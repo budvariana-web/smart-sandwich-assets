@@ -167,7 +167,7 @@
       min-height: 0;
     }
     .card-category {
-      color: var(--accent); font-size: clamp(12px, .52vw, 20px); font-weight: 800;
+      color: var(--accent); font-size: clamp(16px, .72vw, 28px); font-weight: 800;
       text-transform: uppercase; letter-spacing: .07em;
       line-height: 1.2; padding: 0;
       flex-shrink: 0;
@@ -184,10 +184,10 @@
       border-top: 1px solid var(--line); padding-top: 5px;
     }
     .card-name {
-      font-size: clamp(18px, .9vw, 34px); font-weight: 900; line-height: 1.18;
+      font-size: clamp(24px, 1.2vw, 44px); font-weight: 900; line-height: 1.16;
       padding: 0; flex-shrink: 0;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 1; overflow: hidden;
+      -webkit-line-clamp: 2; overflow: hidden;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
@@ -198,9 +198,10 @@
     }
     .card-desc-wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; }
     .card-desc {
-      color: var(--muted); font-size: clamp(13px, .6vw, 23px); line-height: 1.25;
+      color: var(--muted); font-size: clamp(16px, .82vw, 30px); line-height: 1.28;
+      overflow-wrap: break-word;
       display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 1; overflow: hidden;
+      -webkit-line-clamp: 3; overflow: hidden;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
@@ -229,6 +230,18 @@
       content: '';
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(30,90,160,.03) 8px, rgba(30,90,160,.03) 16px);
+    }
+
+    /* A 1280×720 TV viewport cannot hold a square photo, two large language
+       sections and a pinned price. Keep the dish complete in a still-large 4:3
+       field, while preserving readable text and the price. */
+    @media (max-width: 1500px) {
+      .card-img, .card-no-img {
+        aspect-ratio: 4 / 3;
+      }
+      .card-category { font-size: 14px; }
+      .card-name { font-size: 20px; -webkit-line-clamp: 1; }
+      .card-desc { font-size: 14px; line-height: 1.25; -webkit-line-clamp: 2; }
     }
 
     .empty {
