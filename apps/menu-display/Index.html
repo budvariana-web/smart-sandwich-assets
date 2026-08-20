@@ -184,8 +184,13 @@
       border-top: 1px solid var(--line); padding-top: 5px;
     }
     .card-name {
-      font-size: clamp(24px, 1.2vw, 44px); font-weight: 900; line-height: 1.16;
-      padding: 0; flex-shrink: 0;
+      /* Glock's bold glyph box rises above a conventional 1.16 line box.
+         Keep the title's two-line clamp, but give ascenders a real top/bottom
+         reserve so `overflow:hidden` never shears the tops of dish names. */
+      font-size: clamp(24px, 1.2vw, 44px); font-weight: 900; line-height: 1.45;
+      /* Top inset is intentional: this font's painted ascent otherwise starts
+         exactly at the clipped edge on some TV Chromium builds. */
+      padding: .30em 0 0; flex-shrink: 0;
       display: -webkit-box; -webkit-box-orient: vertical;
       -webkit-line-clamp: 2; overflow: hidden;
     }
