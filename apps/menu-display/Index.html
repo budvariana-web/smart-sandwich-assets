@@ -137,14 +137,15 @@
       height: 100%;
     }
 
-    /* Three vertical product cards: photo first. The square media field is as
-       wide as the card, so square dish photos are large and complete. */
+    /* Three vertical product cards: photo first. A 16:9 field keeps the whole
+       dish visible while reserving enough vertical room for complete bilingual
+       source text; product information must never be hidden by line clamps. */
     .card-img {
       position: relative;
       width: 100%;
       flex: 0 0 auto;
       height: auto;
-      aspect-ratio: 1 / 1;
+      aspect-ratio: 16 / 9;
       flex-shrink: 0;
       overflow: hidden;
       background: var(--accent-soft);
@@ -169,36 +170,30 @@
     .card-category {
       color: var(--accent); font-size: clamp(16px, .72vw, 28px); font-weight: 800;
       text-transform: uppercase; letter-spacing: .07em;
-      line-height: 1.2; padding: 0;
+      line-height: 1.2; padding: 2px 0;
       flex-shrink: 0;
     }
     .card-language-list {
-      display: flex; flex-direction: column; flex: 1 1 auto;
-      min-height: 0; overflow: hidden;
+      display: flex; flex-direction: column; flex: 0 0 auto;
+      min-height: 0; overflow: visible;
     }
     .card-language-block {
-      display: flex; flex-direction: column; flex: 1 1 0;
-      min-height: 0; overflow: hidden; padding: 2px 0;
+      display: flex; flex-direction: column; flex: 0 0 auto;
+      min-height: 0; overflow: visible; padding: 2px 0;
     }
     .card-language-block + .card-language-block {
       border-top: 1px solid var(--line); padding-top: 5px;
     }
-    /* The second translated title repeats the product name and displaces its
-       ingredients. Keep the primary title prominent; reserve the second block
-       for the translated composition itself. */
+    /* The translated block contains its composition while the product name is
+       presented once in the first language, as part of the card's hierarchy. */
     .card-language-block + .card-language-block .card-name {
       display: none;
     }
     .card-name {
-      /* Glock's bold glyph box rises above a conventional 1.16 line box.
-         Keep the title's two-line clamp, but give ascenders a real top/bottom
-         reserve so `overflow:hidden` never shears the tops of dish names. */
+      /* Glock's tall glyph box requires a generous line box and top inset. */
       font-size: clamp(24px, 1.2vw, 44px); font-weight: 900; line-height: 1.45;
-      /* Top inset is intentional: this font's painted ascent otherwise starts
-         exactly at the clipped edge on some TV Chromium builds. */
       padding: .30em 0 0; flex-shrink: 0;
-      display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2; overflow: hidden;
+      overflow-wrap: break-word;
     }
     .card-badge {
       display: inline-block; align-self: flex-start;
@@ -207,12 +202,10 @@
       font-size: 12px; font-weight: 900; text-transform: uppercase;
       flex-shrink: 0;
     }
-    .card-desc-wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .card-desc-wrap { flex: 0 0 auto; min-height: 0; overflow: visible; }
     .card-desc {
       color: var(--muted); font-size: clamp(16px, .82vw, 30px); line-height: 1.28;
-      overflow-wrap: break-word;
-      display: -webkit-box; -webkit-box-orient: vertical;
-      -webkit-line-clamp: 4; overflow: hidden;
+      overflow-wrap: break-word; padding: 1px 0 2px;
     }
     .card-price-row {
       display: flex; align-items: baseline; gap: 8px;
@@ -220,11 +213,12 @@
     }
     .card-price {
       color: var(--accent); font-weight: 900; font-size: clamp(30px, 1.36vw, 52px);
-      line-height: 1.12; padding: 0;
+      /* Covers Glock's painted descent as well as ascenders. */
+      line-height: 1.35; padding: 0;
     }
     .card-old-price {
       color: var(--muted); font-size: clamp(16px, .73vw, 28px); text-decoration: line-through;
-      line-height: 1.12;
+      line-height: 1.35;
     }
 
     /* No-image placeholder */
@@ -232,7 +226,7 @@
       width: 100%;
       flex: 0 0 auto;
       height: auto;
-      aspect-ratio: 1 / 1;
+      aspect-ratio: 16 / 9;
       flex-shrink: 0;
       background: linear-gradient(135deg, #e3f0fc, #f2f8fd);
       position: relative;
@@ -243,16 +237,24 @@
       background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(30,90,160,.03) 8px, rgba(30,90,160,.03) 16px);
     }
 
-    /* A 1280×720 TV viewport cannot hold a square photo, two large language
-       sections and a pinned price. Keep the dish complete in a still-large 4:3
-       field, while preserving readable text and the price. */
+    /* At 720p the same three-card page uses a compact but fully readable
+       information layout. These values were sized from the longest ME/RU and
+       EN/DE source descriptions; text is still natural-flow, never clamped. */
     @media (max-width: 1500px) {
       .card-img, .card-no-img {
-        aspect-ratio: 4 / 3;
+        height: 110px;
+        aspect-ratio: auto;
       }
-      .card-category { font-size: 14px; }
-      .card-name { font-size: 20px; -webkit-line-clamp: 1; }
-      .card-desc { font-size: 14px; line-height: 1.25; -webkit-line-clamp: 4; }
+      .card-info { padding: 5px 8px 6px; gap: 1px; }
+      .card-category { font-size: 11px; line-height: 1.3; }
+      .card-name { font-size: 16px; line-height: 1.35; padding-top: .30em; }
+      .card-desc { font-size: 10px; line-height: 1.18; }
+      .card-language-block { padding: 1px 0; }
+      .card-language-block + .card-language-block { padding-top: 3px; }
+      .card-price-row { padding-top: 2px; }
+      .card-price { font-size: 22px; line-height: 1.35; }
+      .card-old-price { font-size: 10px; line-height: 1.35; }
+      .announcement { font-size: 16px; line-height: 1.15; overflow: visible; padding: 8px 10px; }
     }
 
     .empty {
@@ -281,18 +283,18 @@
       border: 1px solid var(--line);
       box-shadow: 0 4px 18px rgba(30, 90, 160, .10);
       color: var(--text);
-      font-size: clamp(22px, 1.05vw, 40px); font-weight: 700;
-      line-height: 1.2;
-      overflow: hidden;
+      font-size: clamp(16px, .85vw, 32px); font-weight: 700;
+      line-height: 1.25;
+      overflow: visible;
       position: relative;
     }
     .announcement .ann-badge {
       position: absolute; top: 8px; right: 10px;
-      font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+      font-size: 10px; line-height: 1.3; padding: 1px 0; letter-spacing: .08em; text-transform: uppercase;
       color: var(--accent);
     }
     .announcement strong { color: var(--accent); }
-    #ann-top-text { display: block; width: 100%; }
+    #ann-top-text { display: block; width: 100%; padding: 1px 0 2px; }
     .weather-card {
       width: 100%; display: grid;
       grid-template-columns: 1fr auto; grid-template-rows: 36px 60px auto;
@@ -306,13 +308,13 @@
     }
     .weather-place { display: block; font-size: 10px; line-height: 1.1; font-weight: 900; letter-spacing: .045em; text-transform: uppercase; color: #3975a8; white-space: nowrap; }
     .weather-reading { grid-column: 1; grid-row: 2; align-self: start; }
-    .weather-temperature { font-size: 46px; line-height: .88; letter-spacing: -.06em; font-weight: 900; color: #146eb5; white-space: nowrap; }
+    .weather-temperature { font-size: 46px; line-height: 1.12; padding: 2px 0; letter-spacing: -.06em; font-weight: 900; color: #146eb5; white-space: nowrap; }
     .weather-icon { grid-column: 2; grid-row: 1 / 3; font-size: 48px; line-height: 1; z-index: 1; filter: drop-shadow(0 5px 7px rgba(50, 139, 203, .17)); }
-    .weather-range { font-size: 11px; color: #5e7890; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .weather-range { font-size: 11px; line-height: 1.3; padding: 1px 0; color: #5e7890; font-variant-numeric: tabular-nums; font-weight: 700; }
     .weather-stats { grid-column: 1 / -1; grid-row: 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding-top: 4px; border-top: 1px solid rgba(40, 117, 177, .16); }
     .weather-stat { min-width: 0; }
     .weather-stat-label { display: block; font-size: 8px; line-height: 1.1; letter-spacing: .02em; text-transform: uppercase; color: #6c879f; white-space: nowrap; }
-    .weather-stat-value { display: block; margin-top: 1px; font-size: 13px; line-height: 1.1; font-weight: 900; color: #1c5f92; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .weather-stat-value { display: block; margin-top: 1px; padding: 1px 0; font-size: 13px; line-height: 1.3; font-weight: 900; color: #1c5f92; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .weather-updated { grid-column: 1 / -1; grid-row: 4; font-size: 10px; line-height: 1.1; color: #7790a6; letter-spacing: .03em; }
     .weather-card.loading { display: flex; min-height: 0; align-items: center; justify-content: center; text-align: center; font-size: 17px; color: var(--muted); }
     @media (max-width: 900px) {
@@ -570,7 +572,14 @@
 
     /* === CARD RENDERING === */
     function itemMarkup(item, pair, showCategories) {
-      var imageUrl = String(item.imageUrl || '');
+      /* Product photography is a local, versioned display asset. Never depend
+         on i-food at runtime: the sheet's orderKey maps to the self-hosted
+         GitHub Pages image prepared under assets/menu/images/. */
+      var order = String(item.orderKey || '').replace(/\D/g, '');
+      var hostedImageUrl = order
+        ? 'https://budvariana-web.github.io/smart-sandwich-assets/assets/menu/images/item-' + ('000' + order).slice(-3) + '.jpg'
+        : '';
+      var imageUrl = hostedImageUrl || String(item.imageUrl || '');
       var hasImage = imageUrl.indexOf('https://') === 0;
       /* Hosted dish photos have two deliberate responsive derivatives: 640w
          for 720p/1080p cards and 1280w for native 4K. Do not download a 4K
@@ -581,7 +590,7 @@
         ? ' srcset="' + escapeText(smallImageUrl) + ' 640w, ' + escapeText(imageUrl) + ' 1280w" sizes="(min-width: 3000px) 25vw, 25vw"'
         : '';
       var imgHtml = hasImage
-        ? '<div class="card-img"><img src="' + escapeText(imageUrl) + '"' + responsiveAttrs + ' alt="" loading="lazy" decoding="async"></div>'
+        ? '<div class="card-img"><img src="' + escapeText(imageUrl) + '"' + responsiveAttrs + ' alt="" loading="eager" decoding="async"></div>'
         : '<div class="card-no-img"></div>';
       var languages = item.languages || {ru: item};
       var first = languages[pair[0]] || languages.ru || item;
