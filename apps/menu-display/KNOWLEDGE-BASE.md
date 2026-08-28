@@ -151,9 +151,27 @@ python tools/video-panel/video_cycle_test.py
 
 ## 8. Видео/сеть: сохранённые ограничения
 
+### Onboarding: где искать и как безопасно менять
+
+- **Единственный source of truth UI/rotation:** `apps/menu-display/Index.html`; опубликованный `assets/menu/index.html` — generated static copy, его не редактировать вручную. После изменения source запускать из корня репозитория `python make_static.py`.
+- **Данные роликов:** `SETTINGS.video_urls` → menu API. Сами MP4 публикуются в `assets/videos/` через GitHub Pages. Не переносить видео на `raw.githubusercontent`; требуются `video/mp4`, CORS, Range и faststart.
+- **Ключевые production functions:** `buildBilingualPages()` строит menu/video sequence; `fullscreenVideoBatch()` выдаёт неповторяющиеся fullscreen clips и двигает cursor только после полного цикла; `schedulePages()` не должен сбрасывать текущий таймер при refresh; `#video-slot` обслуживает отдельный правый ролик.
+- **Минимальная проверка до commit:**
+  ```bash
+  node tools/video-panel/video_interleave_regression_test.js
+  node tools/video-panel/fullscreen_video_cycle_regression_test.js
+  node tools/video-panel/engine_test.py
+  python make_static.py
+  git diff --check
+  ```
+  Первое проверяет, что fullscreen clips не становятся соседними страницами; второе — что surplus clips переходят в следующие menu cycles без повторов; `engine_test.py` — runtime/prefetch policy. При изменении playback дополнительно запускать подходящий `verify_fullscreen_video_*.py` из той же папки и проверять public GH Pages URL.
+- **Нельзя менять без полного понимания:** порядок клипов side-video и fullscreen-video независим; video intermission не считается в видимом page counter; fullscreen page скрывает counter; не вставлять `video → video`; не запускать video при повторном `applyMenu()`.
+
+### Сохранённые ограничения
+
 - Правая панель (`#video-slot`) — отдельный механизм (`preload='metadata'`, `loop=false`, `ended` → `nextVideo()`). Не переводить ролики на `preload=auto`: это параллельно скачивает все MP4 и ломает слабый Wi‑Fi ТВ.
-- MP4 должны быть faststart; GitHub Pages даёт требуемый `video/mp4` + CORS. `raw.githubusercontent` для видео не использовать.
-- `schedulePages()` не должен сбрасывать идущий таймер при refresh, а видео стартует только при входе на его страницу, не на повторном `applyMenu()`.
+- Blob-политика v79.1: ровно один следующий ролик `fetch → Blob`, прежний Blob освобождается, для Blob-пути переход только по `ended`; fallback timer — лишь для failure прямого сетевого пути.
+- **Логика вставки fullscreen:** один набор = до трёх товаров на двух языковых страницах (`ME+RU`, затем `EN+DE`). После каждых N наборов вставляется один fullscreen‑ролик, включая финальную неполную пачку; `buildBilingualPages()` вставляет его только после обеих языковых страниц. Не добавлять tail `while` с роликами.
 
 **Структура MENU (актуально):**
 `A Категория (RU) | B Название (RU) | C Описание i-food (RU) | D Цена | E Старая цена | F В наличии | G Порядок | H Фото | I Бейдж | J Описание наше (RU) | K Показывать | L–N Категория/Название/Описание (ME) | O–Q Категория/Название/Описание (EN) | R–T Категория/Название/Описание (DE)`
