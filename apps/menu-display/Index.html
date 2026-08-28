@@ -99,7 +99,7 @@
       font-size: clamp(32px, 1.67vw, 64px); text-transform: uppercase;
       /* Glock's glyph box needs 1.45; a tighter line box clips its top. */
       line-height: 1.45;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; overflow: visible; text-overflow: clip;
     }
     .header-clock {
       display: inline-block; margin-right: .45em; color: var(--accent);
@@ -238,7 +238,7 @@
     @media (max-width: 2500px) {
       .card-name { font-size: 16px; line-height: 1.27; padding-top: .21em; }
       .card-language-block + .card-language-block .card-name { font-size: 14px; line-height: 1.23; padding-top: .18em; }
-      .card-desc { font-size: 10px; line-height: 1.16; padding: 0; }
+      .card-desc { font-size: 16px; line-height: 1.1; letter-spacing: -.015em; padding: 1px 0 3px; }
       .card-category { font-size: 11px; line-height: 1.15; padding: 1px 0; }
       .card-price { font-size: 24px; line-height: 1.25; }
       .card-price-row { padding-top: 1px; }
