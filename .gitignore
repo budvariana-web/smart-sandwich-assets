@@ -9,6 +9,9 @@ __pycache__/
 node_modules/
 .cache/
 .herms/
+# Local agent state and generated image-import provenance reports.
+.hermes/
+/assets/menu/images-manifest.json
 sketches/
 *.sha256.md
 # Local Sheets exports used only as rollback snapshots during migrations.
