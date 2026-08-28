@@ -180,10 +180,11 @@
       flex: 1 1 0; min-height: 0; overflow: visible;
     }
     .card-language-block {
-      display: flex; flex-direction: column; min-height: 0;
+      display: flex; flex-direction: column; justify-content: center;
+      gap: clamp(4px, .3vw, 10px); min-height: 0;
       overflow: visible; padding: 0;
     }
-    .card-language-block .card-desc-wrap { margin-top: auto; }
+    .card-language-block .card-desc-wrap { margin-top: 0; }
     .card-language-block + .card-language-block {
       border-top: 1px solid var(--line); padding-top: 5px;
     }
@@ -204,7 +205,7 @@
     }
     .card-desc-wrap { flex: 0 0 auto; min-height: 0; overflow: visible; }
     .card-desc {
-      color: var(--muted); font-size: clamp(16px, .82vw, 29px); line-height: 1.28;
+      color: var(--muted); font-size: clamp(16px, .82vw, 28px); line-height: 1.28;
       overflow-wrap: break-word; padding: 1px 0 2px;
     }
     .card-price-row {
