@@ -495,7 +495,9 @@
       data: null, pages: [], page: 0,
       pageTimer: null, countdownTimer: null, pageDeadline: 0,
       refreshTimer: null, videoTimer: null, annTimer: null, weatherTimer: null,
-      videoIndex: 0, weather: null, weatherFailed: false
+      videoIndex: 0, weather: null, weatherFailed: false,
+      pageTimerElapsed: false, miniVideoFinished: true, rightBlockExposureReached: true,
+      rightBlockTimer: null
     };
 
     function $(id) { return document.getElementById(id); }
@@ -662,6 +664,62 @@
       var count = Math.min(slots, clean.length - start);
       var next = start + count;
       return { urls: clean.slice(start, next), nextOffset: next >= clean.length ? 0 : next };
+    }
+
+    /* Each media lane owns a queue. Refill only after every item has been
+       consumed, rather than choosing an item independently at random. */
+    function createPlaylistManager() {
+      return { key: '', items: [], queue: [], current: '' };
+    }
+
+    function shufflePlaylistItems(items, avoid) {
+      var shuffled = items.slice();
+      for (var i = shuffled.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = temp;
+      }
+      if (shuffled.length > 1 && shuffled[0] === avoid) {
+        var swap = 1 + Math.floor(Math.random() * (shuffled.length - 1));
+        temp = shuffled[0]; shuffled[0] = shuffled[swap]; shuffled[swap] = temp;
+      }
+      return shuffled;
+    }
+
+    function syncPlaylistManager(manager, items) {
+      var seen = {};
+      var clean = (items || []).filter(function(item) {
+        if (!item || seen[item]) return false;
+        seen[item] = true;
+        return true;
+      });
+      var key = clean.slice().sort().join('\n');
+      if (manager.key === key) return manager;
+      manager.key = key;
+      manager.items = clean.slice();
+      manager.queue = shufflePlaylistItems(manager.items, manager.current);
+      if (manager.items.indexOf(manager.current) === -1) manager.current = '';
+      return manager;
+    }
+
+    function nextPlaylistItem(manager) {
+      if (!manager.items.length) { manager.current = ''; return ''; }
+      if (!manager.queue.length) manager.queue = shufflePlaylistItems(manager.items, manager.current);
+      manager.current = manager.queue.shift() || '';
+      return manager.current;
+    }
+
+    function takePlaylistItems(manager, count) {
+      var out = [];
+      for (var i = 0; i < Math.max(0, Number(count) || 0); i++) {
+        var item = nextPlaylistItem(manager);
+        if (!item) break;
+        out.push(item);
+      }
+      return out;
+    }
+
+    function isMenuAdvanceReady(pageTimerElapsed, miniVideoFinished, rightBlockExposureReached) {
+      return Boolean(pageTimerElapsed && miniVideoFinished && rightBlockExposureReached);
     }
 
     function renderPage() {
@@ -842,6 +900,10 @@
       if (pg && pg.video) {
         hidePageCountdown();
       } else {
+        state.pageTimerElapsed = false;
+        /* The active mini clip is authoritative: a page timer only declares
+           readiness, it never forces a transition through that clip. */
+        state.miniVideoFinished = !videoOrder.length;
         startPageCountdown(sec);
       }
       /* A cached Blob is complete in RAM: `ended` is authoritative and no
@@ -851,8 +913,14 @@
         state.pageTimer = null;
         return;
       }
-      var fire = (pg && pg.video) ? sec + 15 : sec;
-      state.pageTimer = setTimeout(advancePage, fire * 1000);
+      if (pg && pg.video) {
+        state.pageTimer = setTimeout(advancePage, (sec + 15) * 1000);
+      } else {
+        state.pageTimer = setTimeout(function() {
+          state.pageTimerElapsed = true;
+          tryAdvanceMenuPage();
+        }, sec * 1000);
+      }
     }
 
     /* Advance to the next page. Debounced: a clip 'ended' event arriving at
@@ -915,42 +983,27 @@
 
     /* === VIDEO (preloaded cache, instant switch) === */
     var videoEls = {};     // url -> <video>
-    var videoOrder = [];   // ordered urls
+    var videoOrder = [];   // current side-video queue order
     var activeVideoUrl = '';
-    var videoShuffles = {}; // independent stable random orders: side/fullscreen
-    var fullscreenCycle = { key: '', offset: 0, nextOffset: 0 };
-
-    /* Fisher–Yates shuffle. An order is stable during a display session, so a
-       60-second data refresh cannot restart/repeat a clip. Adding/removing a
-       URL creates a new random order. Each distinct clip appears once before
-       any of them can repeat. */
-    function shuffledVideoUrls(urls, lane) {
-      var clean = (urls || []).filter(function(url) { return Boolean(url); });
-      var key = clean.slice().sort().join('\n');
-      var cached = videoShuffles[lane];
-      if (cached && cached.key === key) return cached.urls.slice();
-      var shuffled = clean.slice();
-      for (var i = shuffled.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var tmp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = tmp;
-      }
-      videoShuffles[lane] = { key: key, urls: shuffled };
-      return shuffled.slice();
-    }
+    var sidePlaylist = createPlaylistManager();
+    var fullscreenPlaylist = createPlaylistManager();
+    var announcementPlaylist = createPlaylistManager();
+    /* A fullscreen menu cycle consumes its own queue only when the menu cycle
+       ends. Refreshes reuse this batch and cannot skip clips. */
+    var fullscreenCycle = { key: '', urls: [] };
 
     function fullscreenVideosForMenuCycle(urls, videoSlots) {
-      var order = shuffledVideoUrls(urls, 'fullscreen');
-      var key = order.slice().sort().join('\n');
+      syncPlaylistManager(fullscreenPlaylist, urls);
+      var key = fullscreenPlaylist.key + '|' + videoSlots;
       if (fullscreenCycle.key !== key) {
-        fullscreenCycle = { key: key, offset: 0, nextOffset: 0 };
+        fullscreenCycle = { key: key, urls: takePlaylistItems(fullscreenPlaylist, videoSlots) };
       }
-      var batch = fullscreenVideoBatch(order, videoSlots, fullscreenCycle.offset);
-      fullscreenCycle.nextOffset = batch.nextOffset;
-      return batch.urls;
+      return fullscreenCycle.urls.slice();
     }
 
     function advanceFullscreenVideoCycle() {
-      if (fullscreenCycle.key) fullscreenCycle.offset = fullscreenCycle.nextOffset;
+      fullscreenCycle.key = '';
+      fullscreenCycle.urls = [];
     }
 
     function ensureVideoElements(urls) {
@@ -983,10 +1036,10 @@
           var ph = $('video-placeholder');
           if (ph) ph.style.display = 'none';
         });
-        /* No looping: when a promo clip ends, switch to the next one. */
-        v.addEventListener('ended', function() {
-          if (videoOrder.length > 1) nextVideo();
-        });
+        /* No looping: each clip finishes naturally before the independent
+           playlist manager selects the next one. */
+        v.addEventListener('ended', handleMiniVideoEnded);
+        v.addEventListener('error', handleMiniVideoEnded);
         v.src = u;
         slot.appendChild(v);
         videoEls[u] = v;
@@ -1008,67 +1061,116 @@
       }
       activeVideoUrl = url;
       el.classList.add('active');
+      el.currentTime = 0;
+      state.miniVideoFinished = false;
       el.play().catch(function() {});
       $('video-counter').textContent = videoOrder.length > 1
         ? (index + 1) + ' / ' + videoOrder.length : '';
     }
 
-    function nextVideo() {
-      if (videoOrder.length < 1) return;
-      playVideo((state.videoIndex + 1) % videoOrder.length);
+    function startNextMiniVideo() {
+      if (!videoOrder.length) { state.miniVideoFinished = true; return; }
+      var url = nextPlaylistItem(sidePlaylist);
+      var index = videoOrder.indexOf(url);
+      if (index >= 0) playVideo(index);
+    }
+
+    function tryAdvanceMenuPage() {
+      var pg = state.pages[state.page];
+      if (pg && pg.video) return false;
+      if (!isMenuAdvanceReady(state.pageTimerElapsed, state.miniVideoFinished, state.rightBlockExposureReached)) return false;
+      advancePage();
+      return true;
+    }
+
+    function handleMiniVideoEnded() {
+      state.miniVideoFinished = true;
+      /* The side lane is independent: even if its natural ending unlocks a
+         page transition, immediately begin the next queued clip for the new
+         page rather than leaving that page blocked without an active video. */
+      var advanced = tryAdvanceMenuPage();
+      startNextMiniVideo();
+      return advanced;
     }
 
     function scheduleVideo() {
+      /* Side clips are switched only by their natural `ended` event. A wall
+         clock must never cut off a clip merely because a menu page elapsed. */
       clearInterval(state.videoTimer);
-      if (videoOrder.length < 2) return;
-      var sec = (state.data && state.data.videoSeconds) || 10;
-      state.videoTimer = setInterval(nextVideo, sec * 1000);
     }
 
-    /* === ANNOUNCEMENTS (rotate top + bottom) === */
-    var annIndex = 0;
+    /* === ANNOUNCEMENTS (independent shuffled top + bottom lanes) === */
+    var activeAnnouncementTop = '';
+    var activeAnnouncementBottom = '';
+    var WEATHER_ANNOUNCEMENT = '__weather__';
+
+    function announcementItems() {
+      var anns = (state.data && state.data.announcements) || [];
+      return anns.concat([WEATHER_ANNOUNCEMENT]);
+    }
+
+    function renderAnnouncementValue(value, textEl, badgeEl) {
+      if (value === WEATHER_ANNOUNCEMENT) {
+        textEl.innerHTML = weatherMarkup();
+        badgeEl.textContent = '';
+      } else {
+        textEl.textContent = value || '';
+        badgeEl.textContent = value ? T.akcija : '';
+      }
+    }
 
     function renderAnnouncements() {
-      var anns = (state.data && state.data.announcements) || [];
       var top = $('ann-top'), bottom = $('ann-bottom');
       var zone = $('video-zone');
-      var tText = $('ann-top-text'), bText = $('ann-bottom-text');
-      var tBadge = $('ann-top-badge'), bBadge = $('ann-bottom-badge');
-      /* Weather is one additional slide in the upper promo card. Existing
-         promotions keep rotating in both cards exactly as before. */
-      if (!anns.length) {
-        zone.classList.remove('no-ann');
-        top.style.display = '';
-        bottom.style.display = 'none';
-        tText.innerHTML = weatherMarkup();
-        tBadge.textContent = '';
-        return;
+      var previousKey = announcementPlaylist.key;
+      syncPlaylistManager(announcementPlaylist, announcementItems());
+      if (announcementPlaylist.key !== previousKey) {
+        activeAnnouncementTop = '';
+        activeAnnouncementBottom = '';
       }
+      var newlyShown = false;
+      if (!activeAnnouncementTop) { activeAnnouncementTop = nextPlaylistItem(announcementPlaylist); newlyShown = true; }
+      if (!activeAnnouncementBottom && announcementPlaylist.items.length > 1) { activeAnnouncementBottom = nextPlaylistItem(announcementPlaylist); newlyShown = true; }
       zone.classList.remove('no-ann');
       top.style.display = '';
-      var topSlot = annIndex % (anns.length + 1);
-      var isWeather = topSlot === anns.length;
-      var bottomIdx = isWeather ? 0 : (topSlot + 1) % anns.length;
-      if (isWeather) {
-        tText.innerHTML = weatherMarkup();
-        tBadge.textContent = '';
-      } else {
-        tText.textContent = anns[topSlot];
-        tBadge.textContent = T.akcija + ' ' + (topSlot + 1) + ' / ' + anns.length;
-      }
-      bText.textContent = anns[bottomIdx];
-      bottom.style.display = '';
-      bBadge.textContent = T.akcija + ' ' + (bottomIdx + 1) + ' / ' + anns.length;
+      renderAnnouncementValue(activeAnnouncementTop, $('ann-top-text'), $('ann-top-badge'));
+      bottom.style.display = activeAnnouncementBottom ? '' : 'none';
+      if (activeAnnouncementBottom) renderAnnouncementValue(activeAnnouncementBottom, $('ann-bottom-text'), $('ann-bottom-badge'));
+      if (newlyShown) markRightBlockShown();
+    }
+
+    function markRightBlockShown() {
+      clearTimeout(state.rightBlockTimer);
+      var minSec = Math.max(1, (state.data && state.data.announcementSeconds) || 8);
+      state.rightBlockExposureReached = false;
+      state.rightBlockTimer = setTimeout(function() {
+        state.rightBlockExposureReached = true;
+        tryAdvanceMenuPage();
+      }, minSec * 1000);
+    }
+
+    function showNextAnnouncements() {
+      syncPlaylistManager(announcementPlaylist, announcementItems());
+      activeAnnouncementTop = nextPlaylistItem(announcementPlaylist);
+      activeAnnouncementBottom = announcementPlaylist.items.length > 1 ? nextPlaylistItem(announcementPlaylist) : '';
+      renderAnnouncements();
+      markRightBlockShown();
     }
 
     function scheduleAnnouncements() {
       clearInterval(state.annTimer);
-      var anns = (state.data && state.data.announcements) || [];
-      if (anns.length < 2) return;
-      var sec = (state.data && state.data.announcementSeconds) || 8;
+      syncPlaylistManager(announcementPlaylist, announcementItems());
+      if (!activeAnnouncementTop) showNextAnnouncements();
+      if (announcementPlaylist.items.length < 2) {
+        state.rightBlockExposureReached = true;
+        return;
+      }
+      var sec = Math.max(1, (state.data && state.data.announcementSeconds) || 8);
       state.annTimer = setInterval(function() {
-        annIndex++;
-        renderAnnouncements();
+        /* At the boundary, advance the page first if every gate is ready;
+           otherwise the next independently queued announcements are shown. */
+        state.rightBlockExposureReached = true;
+        if (!tryAdvanceMenuPage()) showNextAnnouncements();
       }, sec * 1000);
     }
 
@@ -1105,12 +1207,15 @@
       schedulePages();
       scheduleRefresh();
 
-      /* Video: ensure cached elements, then play */
-      var urls = shuffledVideoUrls(data.videoUrls || [], 'side');
-      ensureVideoElements(urls);
+      /* Side-video lane: keep its independent queue intact across ordinary
+         data refreshes; a changed source list alone rebuilds this lane. */
+      syncPlaylistManager(sidePlaylist, data.videoUrls || []);
+      ensureVideoElements(sidePlaylist.items);
       if (videoOrder.length > 0) {
-        playVideo(state.videoIndex >= videoOrder.length ? 0 : state.videoIndex);
+        if (!activeVideoUrl || videoOrder.indexOf(activeVideoUrl) === -1) startNextMiniVideo();
         scheduleVideo();
+      } else {
+        state.miniVideoFinished = true;
       }
 
       /* Announcements + the weather slide in the upper promo card */
@@ -1165,11 +1270,7 @@
 
     /* === CLICK video to skip === */
     $('video-slot').addEventListener('click', function() {
-      if (videoOrder.length > 1) {
-        clearInterval(state.videoTimer);
-        nextVideo();
-        scheduleVideo();
-      }
+      if (videoOrder.length > 1) startNextMiniVideo();
     });
 
     /* === START === */
