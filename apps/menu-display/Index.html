@@ -675,8 +675,21 @@
       $('menu').innerHTML = items.length
         ? items.map(function(item) { return itemMarkup(item, pair, !state.data || state.data.showCategories !== false); }).join('')
         : '<div class="empty">' + T.empty + '</div>';
-      $('page-count').textContent = state.pages.length > 1
-        ? (state.page + 1) + ' / ' + state.pages.length : '';
+      updateMenuPageCount();
+    }
+
+    /* Video inserts belong to rotation timing, not to the menu sequence shown
+       to guests. Keep their indices out of the visible menu counter. */
+    function updateMenuPageCount() {
+      var total = 0;
+      var ordinal = 0;
+      for (var i = 0; i < state.pages.length; i++) {
+        if (state.pages[i] && state.pages[i].video) continue;
+        total++;
+        if (i === state.page) ordinal = total;
+      }
+      $('page-count').textContent = total > 1 && ordinal > 0
+        ? ordinal + ' / ' + total : '';
     }
 
     /* === FULLSCREEN VIDEO PAGES (between RU/ME cycles) === */
@@ -734,8 +747,8 @@
 
     function renderVideoPage(url) {
       fullscreenVideoWrap.classList.add('active');
-      $('page-count').textContent = state.pages.length > 1
-        ? (state.page + 1) + ' / ' + state.pages.length : '';
+      /* A video is an intermission, not a numbered menu screen. */
+      $('page-count').textContent = '';
       /* Direct navigation or a changed menu can reach a video that has not
          been scheduled yet; start its one-file fetch and wait, never stream a
          half-downloaded clip. */
