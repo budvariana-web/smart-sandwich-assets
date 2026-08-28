@@ -33,7 +33,9 @@ vm.runInNewContext([
   loadFunction('syncPlaylistManager', 'manager, items'),
   loadFunction('nextPlaylistItem', 'manager'),
   loadFunction('takePlaylistItems', 'manager, count'),
-  loadFunction('isMenuAdvanceReady', 'pageTimerElapsed, miniVideoFinished, rightBlockExposureReached')
+  loadFunction('isMenuAdvanceReady', 'pageTimerElapsed, miniVideoFinished, rightBlockExposureReached'),
+  loadFunction('isActiveMiniVideoEvent', 'activeUrl, sourceUrl'),
+  loadFunction('rightBlockNeedsMinimumExposure', 'items')
 ].join('\n'), sandbox);
 
 // A lane shows every item exactly once before its next shuffle begins.
@@ -67,5 +69,13 @@ assert.strictEqual(sandbox.isMenuAdvanceReady(true, true, true), true);
 assert.strictEqual(sandbox.isMenuAdvanceReady(false, true, true), false);
 assert.strictEqual(sandbox.isMenuAdvanceReady(true, false, true), false);
 assert.strictEqual(sandbox.isMenuAdvanceReady(true, true, false), false);
+
+// A preload failure must never impersonate the currently visible mini-video.
+assert.strictEqual(sandbox.isActiveMiniVideoEvent('active.mp4', 'preloaded.mp4'), false);
+assert.strictEqual(sandbox.isActiveMiniVideoEvent('active.mp4', 'active.mp4'), true);
+
+// Weather is a real right-hand block and must receive its minimum exposure.
+assert.strictEqual(sandbox.rightBlockNeedsMinimumExposure(['__weather__']), true);
+assert.strictEqual(sandbox.rightBlockNeedsMinimumExposure([]), false);
 
 console.log('PASS: independent shuffled playlists and page transition gates');

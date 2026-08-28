@@ -722,6 +722,14 @@
       return Boolean(pageTimerElapsed && miniVideoFinished && rightBlockExposureReached);
     }
 
+    function isActiveMiniVideoEvent(activeUrl, sourceUrl) {
+      return Boolean(activeUrl && sourceUrl && activeUrl === sourceUrl);
+    }
+
+    function rightBlockNeedsMinimumExposure(items) {
+      return Boolean(items && items.length);
+    }
+
     function renderPage() {
       var pg = state.pages[state.page];
       if (pg && pg.video) { renderVideoPage(pg.video); return; }
@@ -1037,9 +1045,11 @@
           if (ph) ph.style.display = 'none';
         });
         /* No looping: each clip finishes naturally before the independent
-           playlist manager selects the next one. */
+           playlist manager selects the next one. Ignore errors from inactive
+           preload elements: only the visible clip can unlock a page change. */
         v.addEventListener('ended', handleMiniVideoEnded);
         v.addEventListener('error', handleMiniVideoEnded);
+        v.dataset.playlistUrl = u;
         v.src = u;
         slot.appendChild(v);
         videoEls[u] = v;
@@ -1083,7 +1093,10 @@
       return true;
     }
 
-    function handleMiniVideoEnded() {
+    function handleMiniVideoEnded(event) {
+      var sourceUrl = event && event.currentTarget && event.currentTarget.dataset
+        ? event.currentTarget.dataset.playlistUrl : '';
+      if (sourceUrl && !isActiveMiniVideoEvent(activeVideoUrl, sourceUrl)) return false;
       state.miniVideoFinished = true;
       /* The side lane is independent: even if its natural ending unlocks a
          page transition, immediately begin the next queued clip for the new
@@ -1161,10 +1174,13 @@
       clearInterval(state.annTimer);
       syncPlaylistManager(announcementPlaylist, announcementItems());
       if (!activeAnnouncementTop) showNextAnnouncements();
-      if (announcementPlaylist.items.length < 2) {
+      if (!rightBlockNeedsMinimumExposure(announcementPlaylist.items)) {
         state.rightBlockExposureReached = true;
         return;
       }
+      /* Even a lone weather card is a visible right-hand block and keeps the
+         timeout armed by renderAnnouncements(), so it gets full exposure. */
+      if (announcementPlaylist.items.length < 2) return;
       var sec = Math.max(1, (state.data && state.data.announcementSeconds) || 8);
       state.annTimer = setInterval(function() {
         /* At the boundary, advance the page first if every gate is ready;
