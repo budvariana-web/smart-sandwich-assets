@@ -172,14 +172,18 @@
       line-height: 1.2; padding: 2px 0;
       flex-shrink: 0;
     }
+    /* The two localized descriptions are an intentional two-part reading area:
+       both language blocks get an equal share of the space between category and
+       pinned price, so the second language never crowds the first at the top. */
     .card-language-list {
-      display: flex; flex-direction: column; flex: 0 0 auto;
-      min-height: 0; overflow: visible;
+      display: grid; grid-template-rows: repeat(2, minmax(0, 1fr));
+      flex: 1 1 0; min-height: 0; overflow: visible;
     }
     .card-language-block {
-      display: flex; flex-direction: column; flex: 0 0 auto;
-      min-height: 0; overflow: visible; padding: 2px 0;
+      display: flex; flex-direction: column; min-height: 0;
+      overflow: visible; padding: 0;
     }
+    .card-language-block .card-desc-wrap { margin-top: auto; }
     .card-language-block + .card-language-block {
       border-top: 1px solid var(--line); padding-top: 5px;
     }
@@ -200,7 +204,7 @@
     }
     .card-desc-wrap { flex: 0 0 auto; min-height: 0; overflow: visible; }
     .card-desc {
-      color: var(--muted); font-size: clamp(16px, .82vw, 30px); line-height: 1.28;
+      color: var(--muted); font-size: clamp(16px, .82vw, 29px); line-height: 1.28;
       overflow-wrap: break-word; padding: 1px 0 2px;
     }
     .card-price-row {
@@ -451,7 +455,7 @@
   <script>
     // v4 invalidates pre-multilingual flat RU/ME payloads in browser storage.
     var CACHE_KEY = 'sb-v4-' + (window.MENU_LANG || 'ru');
-    var BUILD_ID  = 'gh-pages-20260828-065636';
+    var BUILD_ID  = 'gh-pages-20260828-070153';
     var CARDS_PER_PAGE = 3;
 
     /* === I18N === */
