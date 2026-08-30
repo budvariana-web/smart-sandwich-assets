@@ -497,7 +497,7 @@
       refreshTimer: null, videoTimer: null, annTimer: null, weatherTimer: null,
       videoIndex: 0, weather: null, weatherFailed: false,
       pageTimerElapsed: false, miniVideoFinished: true, rightBlockExposureReached: true,
-      rightBlockTimer: null
+      rightBlockTimer: null, orchestrator: null
     };
 
     function $(id) { return document.getElementById(id); }
@@ -730,6 +730,45 @@
       return Boolean(items && items.length);
     }
 
+    /* The sole authority for page exits. Playlist lanes only report that their
+       current item finished; they never initiate a page change themselves. */
+    function createTransitionOrchestrator(hasMiniVideo, hasRightBlock) {
+      return {
+        pageTimerElapsed: false,
+        miniVideoFinished: !hasMiniVideo,
+        rightBlockExposureReached: !hasRightBlock,
+        exitRequested: false
+      };
+    }
+
+    function markPageTimerElapsed(orchestrator) {
+      orchestrator.pageTimerElapsed = true;
+      orchestrator.exitRequested = true;
+      return orchestrator;
+    }
+
+    function markMiniVideoFinished(orchestrator) {
+      orchestrator.miniVideoFinished = true;
+      return orchestrator;
+    }
+
+    function markRightBlockExposureReached(orchestrator) {
+      orchestrator.rightBlockExposureReached = true;
+      return orchestrator;
+    }
+
+    function shouldStartNextMiniVideo(orchestrator) {
+      return !orchestrator.exitRequested;
+    }
+
+    function shouldRotateRightBlock(orchestrator) {
+      return !orchestrator.exitRequested;
+    }
+
+    function isOrchestratorReadyToAdvance(orchestrator) {
+      return Boolean(orchestrator.exitRequested && orchestrator.miniVideoFinished && orchestrator.rightBlockExposureReached);
+    }
+
     function renderPage() {
       var pg = state.pages[state.page];
       if (pg && pg.video) { renderVideoPage(pg.video); return; }
@@ -908,10 +947,10 @@
       if (pg && pg.video) {
         hidePageCountdown();
       } else {
+        state.orchestrator = createTransitionOrchestrator(Boolean(videoOrder.length), rightBlockNeedsMinimumExposure(announcementPlaylist.items));
         state.pageTimerElapsed = false;
-        /* The active mini clip is authoritative: a page timer only declares
-           readiness, it never forces a transition through that clip. */
-        state.miniVideoFinished = !videoOrder.length;
+        state.miniVideoFinished = state.orchestrator.miniVideoFinished;
+        state.rightBlockExposureReached = state.orchestrator.rightBlockExposureReached;
         startPageCountdown(sec);
       }
       /* A cached Blob is complete in RAM: `ended` is authoritative and no
@@ -926,6 +965,7 @@
       } else {
         state.pageTimer = setTimeout(function() {
           state.pageTimerElapsed = true;
+          if (state.orchestrator) markPageTimerElapsed(state.orchestrator);
           tryAdvanceMenuPage();
         }, sec * 1000);
       }
@@ -950,6 +990,13 @@
       }
       renderPage();
       armPageTimer();
+      var nextPage = state.pages[state.page];
+      if (!(nextPage && nextPage.video)) {
+        /* A new page gets fresh side content only after the old page fully
+           exited; this is the freeze that prevents timing races. */
+        if (videoOrder.length) startNextMiniVideo();
+        if (announcementPlaylist.items.length) showNextAnnouncements();
+      }
     }
 
     function pageDurationSec() {
@@ -989,93 +1036,49 @@
       rearmIfVideoPage();
     });
 
-    /* === VIDEO (preloaded cache, instant switch) === */
-    var videoEls = {};     // url -> <video>
-    var videoOrder = [];   // current side-video queue order
+    /* === SIDE VIDEO: one reusable element, one active decoder === */
+    var sideVideoEl = null;
+    var videoOrder = [];
     var activeVideoUrl = '';
     var sidePlaylist = createPlaylistManager();
     var fullscreenPlaylist = createPlaylistManager();
     var announcementPlaylist = createPlaylistManager();
-    /* A fullscreen menu cycle consumes its own queue only when the menu cycle
-       ends. Refreshes reuse this batch and cannot skip clips. */
     var fullscreenCycle = { key: '', urls: [] };
 
     function fullscreenVideosForMenuCycle(urls, videoSlots) {
       syncPlaylistManager(fullscreenPlaylist, urls);
       var key = fullscreenPlaylist.key + '|' + videoSlots;
-      if (fullscreenCycle.key !== key) {
-        fullscreenCycle = { key: key, urls: takePlaylistItems(fullscreenPlaylist, videoSlots) };
-      }
+      if (fullscreenCycle.key !== key) fullscreenCycle = { key: key, urls: takePlaylistItems(fullscreenPlaylist, videoSlots) };
       return fullscreenCycle.urls.slice();
     }
 
-    function advanceFullscreenVideoCycle() {
-      fullscreenCycle.key = '';
-      fullscreenCycle.urls = [];
-    }
+    function advanceFullscreenVideoCycle() { fullscreenCycle.key = ''; fullscreenCycle.urls = []; }
 
     function ensureVideoElements(urls) {
-      var slot = $('video-slot');
-      var next = [];
-      for (var i = 0; i < urls.length; i++) if (urls[i]) next.push(urls[i]);
-      // Remove elements whose url is gone
-      for (var oldUrl in videoEls) {
-        if (next.indexOf(oldUrl) === -1) {
-          var oldEl = videoEls[oldUrl];
-          oldEl.pause();
-          oldEl.removeAttribute('src');
-          oldEl.load();
-          oldEl.parentNode.removeChild(oldEl);
-          delete videoEls[oldUrl];
-        }
-      }
-      // Create elements for new urls, preload in background
-      for (var j = 0; j < next.length; j++) {
-        var u = next[j];
-        if (videoEls[u]) continue;
-        var v = document.createElement('video');
-        v.muted = true; v.loop = false; v.playsInline = true;
-        /* metadata, not auto: with auto the browser starts downloading all N
-           clips at once (~30 MB) and on a slow TV Wi-Fi the page stalls and
-           no clip can start. metadata gives us duration + instant start on
-           demand. */
-        v.preload = 'metadata';
-        v.addEventListener('canplay', function() {
-          var ph = $('video-placeholder');
-          if (ph) ph.style.display = 'none';
-        });
-        /* No looping: each clip finishes naturally before the independent
-           playlist manager selects the next one. Ignore errors from inactive
-           preload elements: only the visible clip can unlock a page change. */
-        v.addEventListener('ended', handleMiniVideoEnded);
-        v.addEventListener('error', handleMiniVideoEnded);
-        v.dataset.playlistUrl = u;
-        v.src = u;
-        slot.appendChild(v);
-        videoEls[u] = v;
-        v.load();
-      }
-      videoOrder = next;
+      videoOrder = (urls || []).slice();
+      if (sideVideoEl) return;
+      sideVideoEl = document.createElement('video');
+      sideVideoEl.muted = true; sideVideoEl.loop = false; sideVideoEl.playsInline = true; sideVideoEl.preload = 'metadata';
+      sideVideoEl.addEventListener('canplay', function() { $('video-placeholder').style.display = 'none'; });
+      sideVideoEl.addEventListener('ended', handleMiniVideoEnded);
+      sideVideoEl.addEventListener('error', handleMiniVideoEnded);
+      $('video-slot').appendChild(sideVideoEl);
     }
 
     function playVideo(index) {
-      if (!videoOrder.length) return;
+      if (!videoOrder.length || !sideVideoEl) return;
       if (!videoOrder[index]) index = 0;
       state.videoIndex = index;
       var url = videoOrder[index];
-      var el = videoEls[url];
-      if (!el) return;
-      if (activeVideoUrl && activeVideoUrl !== url) {
-        var prev = videoEls[activeVideoUrl];
-        if (prev) { prev.pause(); prev.classList.remove('active'); }
-      }
       activeVideoUrl = url;
-      el.classList.add('active');
-      el.currentTime = 0;
+      sideVideoEl.dataset.playlistUrl = url;
+      sideVideoEl.classList.add('active');
+      sideVideoEl.src = url;
+      sideVideoEl.load();
       state.miniVideoFinished = false;
-      el.play().catch(function() {});
-      $('video-counter').textContent = videoOrder.length > 1
-        ? (index + 1) + ' / ' + videoOrder.length : '';
+      if (state.orchestrator) state.orchestrator.miniVideoFinished = false;
+      sideVideoEl.play().catch(function() {});
+      $('video-counter').textContent = videoOrder.length > 1 ? (index + 1) + ' / ' + videoOrder.length : '';
     }
 
     function startNextMiniVideo() {
@@ -1088,27 +1091,23 @@
     function tryAdvanceMenuPage() {
       var pg = state.pages[state.page];
       if (pg && pg.video) return false;
-      if (!isMenuAdvanceReady(state.pageTimerElapsed, state.miniVideoFinished, state.rightBlockExposureReached)) return false;
+      if (!state.orchestrator || !isOrchestratorReadyToAdvance(state.orchestrator)) return false;
       advancePage();
       return true;
     }
 
     function handleMiniVideoEnded(event) {
-      var sourceUrl = event && event.currentTarget && event.currentTarget.dataset
-        ? event.currentTarget.dataset.playlistUrl : '';
+      var sourceUrl = event && event.currentTarget && event.currentTarget.dataset ? event.currentTarget.dataset.playlistUrl : '';
       if (sourceUrl && !isActiveMiniVideoEvent(activeVideoUrl, sourceUrl)) return false;
       state.miniVideoFinished = true;
-      /* The side lane is independent: even if its natural ending unlocks a
-         page transition, immediately begin the next queued clip for the new
-         page rather than leaving that page blocked without an active video. */
+      if (state.orchestrator) markMiniVideoFinished(state.orchestrator);
       var advanced = tryAdvanceMenuPage();
-      startNextMiniVideo();
+      if (!advanced && (!state.orchestrator || shouldStartNextMiniVideo(state.orchestrator))) startNextMiniVideo();
       return advanced;
     }
 
     function scheduleVideo() {
-      /* Side clips are switched only by their natural `ended` event. A wall
-         clock must never cut off a clip merely because a menu page elapsed. */
+      /* Natural media events drive the side lane; no competing wall-clock. */
       clearInterval(state.videoTimer);
     }
 
@@ -1156,8 +1155,10 @@
       clearTimeout(state.rightBlockTimer);
       var minSec = Math.max(1, (state.data && state.data.announcementSeconds) || 8);
       state.rightBlockExposureReached = false;
+      if (state.orchestrator) state.orchestrator.rightBlockExposureReached = false;
       state.rightBlockTimer = setTimeout(function() {
         state.rightBlockExposureReached = true;
+        if (state.orchestrator) markRightBlockExposureReached(state.orchestrator);
         tryAdvanceMenuPage();
       }, minSec * 1000);
     }
@@ -1183,10 +1184,10 @@
       if (announcementPlaylist.items.length < 2) return;
       var sec = Math.max(1, (state.data && state.data.announcementSeconds) || 8);
       state.annTimer = setInterval(function() {
-        /* At the boundary, advance the page first if every gate is ready;
-           otherwise the next independently queued announcements are shown. */
-        state.rightBlockExposureReached = true;
-        if (!tryAdvanceMenuPage()) showNextAnnouncements();
+        /* Once the page timer elapsed, keep the final visible block stable.
+           Its timeout will notify the orchestrator and unlock the exit. */
+        if (state.orchestrator && !shouldRotateRightBlock(state.orchestrator)) return;
+        showNextAnnouncements();
       }, sec * 1000);
     }
 

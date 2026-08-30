@@ -14,7 +14,7 @@ const elements = Object.fromEntries([
   textContent: '', innerHTML: '', style: {},
   classList: { add() {}, remove() {}, toggle() {} },
   addEventListener() {}, pause() {}, play() { return Promise.resolve(); },
-  removeAttribute() {}, load() {}
+  appendChild() {}, removeAttribute() {}, load() {}
 }]));
 const menu = {
   brand: 'SMART <BAR>', refreshSeconds: 60, pageSeconds: 15,
@@ -37,7 +37,13 @@ const fetch = (url) => {
   };
 };
 const context = {
-  document: { getElementById: id => elements[id] },
+  document: {
+    getElementById: id => elements[id],
+    createElement() {
+      return { dataset: {}, classList: { add() {}, remove() {} }, muted: false, loop: false, playsInline: false,
+        preload: '', addEventListener() {}, pause() {}, play() { return Promise.resolve(); }, removeAttribute() {}, load() {} };
+    }
+  },
   window: { google, setTimeout() {}, MENU_LANG: 'ru' }, google, fetch,
   localStorage: { setItem() {}, getItem() { return null; } },
   URL, Date, Intl, console, setTimeout() { return 1; }, clearTimeout() {},

@@ -35,7 +35,14 @@ vm.runInNewContext([
   loadFunction('takePlaylistItems', 'manager, count'),
   loadFunction('isMenuAdvanceReady', 'pageTimerElapsed, miniVideoFinished, rightBlockExposureReached'),
   loadFunction('isActiveMiniVideoEvent', 'activeUrl, sourceUrl'),
-  loadFunction('rightBlockNeedsMinimumExposure', 'items')
+  loadFunction('rightBlockNeedsMinimumExposure', 'items'),
+  loadFunction('createTransitionOrchestrator', 'hasMiniVideo, hasRightBlock'),
+  loadFunction('markPageTimerElapsed', 'orchestrator'),
+  loadFunction('markMiniVideoFinished', 'orchestrator'),
+  loadFunction('markRightBlockExposureReached', 'orchestrator'),
+  loadFunction('shouldStartNextMiniVideo', 'orchestrator'),
+  loadFunction('shouldRotateRightBlock', 'orchestrator'),
+  loadFunction('isOrchestratorReadyToAdvance', 'orchestrator')
 ].join('\n'), sandbox);
 
 // A lane shows every item exactly once before its next shuffle begins.
@@ -77,5 +84,19 @@ assert.strictEqual(sandbox.isActiveMiniVideoEvent('active.mp4', 'active.mp4'), t
 // Weather is a real right-hand block and must receive its minimum exposure.
 assert.strictEqual(sandbox.rightBlockNeedsMinimumExposure(['__weather__']), true);
 assert.strictEqual(sandbox.rightBlockNeedsMinimumExposure([]), false);
+
+// Once a page is ready to leave, the orchestrator freezes *new* side content
+// and waits for the currently visible video/right block instead of racing them.
+const transition = sandbox.createTransitionOrchestrator(true, true);
+assert.strictEqual(sandbox.shouldStartNextMiniVideo(transition), true);
+assert.strictEqual(sandbox.shouldRotateRightBlock(transition), true);
+sandbox.markPageTimerElapsed(transition);
+assert.strictEqual(sandbox.shouldStartNextMiniVideo(transition), false);
+assert.strictEqual(sandbox.shouldRotateRightBlock(transition), false);
+assert.strictEqual(sandbox.isOrchestratorReadyToAdvance(transition), false);
+sandbox.markMiniVideoFinished(transition);
+assert.strictEqual(sandbox.isOrchestratorReadyToAdvance(transition), false);
+sandbox.markRightBlockExposureReached(transition);
+assert.strictEqual(sandbox.isOrchestratorReadyToAdvance(transition), true);
 
 console.log('PASS: independent shuffled playlists and page transition gates');
