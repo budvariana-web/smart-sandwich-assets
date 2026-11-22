@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Smart Sandwich Bar — Video</title>
+  <style>
+    :root { --accent:#1e88e5; --ink:#f6fbff; --shade:rgba(4,15,28,.7); }
+    * { box-sizing:border-box; }
+    html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#000; font-family:Arial, Helvetica, sans-serif; }
+    #stage { position:fixed; inset:0; display:grid; place-items:center; background:#000; }
+    video { width:100%; height:100%; object-fit:contain; background:#000; }
+    header { position:fixed; z-index:2; left:clamp(18px,2.1vw,58px); top:clamp(16px,2vw,48px); display:flex; align-items:baseline; gap:clamp(12px,1.2vw,30px); color:var(--ink); text-shadow:0 2px 12px #000; pointer-events:none; }
+    #clock { color:#81c5ff; font-size:clamp(26px,2.3vw,72px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.035em; }
+    #brand { font-size:clamp(18px,1.45vw,44px); font-weight:800; letter-spacing:.12em; white-space:nowrap; }
+    #status { position:fixed; z-index:3; left:50%; top:50%; transform:translate(-50%,-50%); max-width:75vw; padding:18px 24px; color:var(--ink); background:var(--shade); border:1px solid rgba(129,197,255,.45); border-radius:12px; text-align:center; font-size:clamp(18px,1.5vw,34px); line-height:1.35; }
+    #status[hidden] { display:none; }
+  </style>
+</head>
+<body>
+  <header aria-label="Smart Sandwich Bar"><time id="clock"></time><span id="brand">SMART SANDWICH BAR</span></header>
+  <main id="stage"><video id="player" muted playsinline preload="auto"></video></main>
+  <div id="status">Загрузка видеоплеера…</div>
+  <script type="module">
+    import { ShuffledQueue, normalizeUrls } from './assets/video-player/player-core.mjs';
+    const MANIFEST_URL = './assets/video-player/playlist.json';
+    const player = document.getElementById('player');
+    const status = document.getElementById('status');
+    const queue = new ShuffledQueue();
+    let failures = new Set();
+
+    function show(message) { status.textContent = message; status.hidden = false; }
+    function hide() { status.hidden = true; }
+    function clock() { document.getElementById('clock').textContent = new Intl.DateTimeFormat('ru-RU', { hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date()); }
+    clock(); setInterval(clock, 1000);
+
+    function setPlaylist(urls) {
+      const valid = normalizeUrls(urls);
+      if (!valid.length) return false;
+      failures = new Set([...failures].filter(url => valid.includes(url)));
+      queue.replace(valid);
+      return true;
+    }
+    async function getJson(url) {
+      const response = await fetch(url, { cache:'no-store' });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    }
+    function nextUrl() {
+      for (let i = 0; i < queue.urls.length; i += 1) {
+        const url = queue.next();
+        if (url && !failures.has(url)) return url;
+      }
+      return '';
+    }
+    function playNext() {
+      const url = nextUrl();
+      if (!url) { show('Нет доступных видеороликов. Плеер повторит попытку автоматически.'); return; }
+      player.src = url;
+      player.load();
+      player.play().then(hide).catch(() => show('Нажмите экран для запуска видеоплеера.'));
+    }
+    player.addEventListener('ended', playNext);
+    player.addEventListener('error', () => {
+      if (player.currentSrc) failures.add(player.currentSrc);
+      playNext();
+    });
+    document.addEventListener('pointerdown', () => { player.play().then(hide).catch(() => {}); }, { passive:true });
+
+    (async () => {
+      try {
+        const manifest = await getJson(MANIFEST_URL + '?v=' + Date.now());
+        setPlaylist(manifest.videoUrls);
+      } catch (_) { /* retry below if the static manifest is temporarily unavailable */ }
+      if (!queue.urls.length) { show('Плейлист пока недоступен. Повторная попытка через 20 секунд.'); setTimeout(() => location.reload(), 20000); return; }
+      playNext();
+    })();
+  </script>
+</body>
+</html>
