@@ -8,7 +8,7 @@ with sync_playwright() as p:
   page=b.new_page(viewport={'width':width,'height':height}); errors=[]
   page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
   page.goto(URL,wait_until='domcontentloaded'); page.wait_for_function("()=>document.querySelector('.player-layer.active')?.currentTime>0.5",timeout=45000)
-  result=page.evaluate("""()=>{const h=document.querySelector('header').getBoundingClientRect(),v=document.querySelector('.player-layer.active'),t=document.querySelector('#hours-status').getBoundingClientRect();const videos=[...document.querySelectorAll('.player-layer')];return {header:[h.left,h.top,h.right,h.bottom],timer:[t.left,t.top,t.right,t.bottom],timerText:document.querySelector('#hours-countdown').textContent,timerLabel:document.querySelector('#hours-label').textContent,timerFont:parseFloat(getComputedStyle(document.querySelector('#hours-countdown')).fontSize),scroll:[document.documentElement.scrollWidth,document.documentElement.scrollHeight,innerWidth,innerHeight],playing:!v.paused,time:v.currentTime,status:document.querySelector('#status').hidden,layers:videos.length,contained:videos.every(x=>getComputedStyle(x).objectFit==='contain')}}""")
+  result=page.evaluate("""()=>{const h=document.querySelector('header').getBoundingClientRect(),v=document.querySelector('.player-layer.active'),t=document.querySelector('#hours-status').getBoundingClientRect();const videos=[...document.querySelectorAll('.player-layer')];return {header:[h.left,h.top,h.right,h.bottom],timer:[t.left,t.top,t.right,t.bottom],timerText:document.querySelector('#hours-countdown').textContent,timerLabel:document.querySelector('#hours-label').textContent,timerLabelFont:parseFloat(getComputedStyle(document.querySelector('#hours-label')).fontSize),timerFont:parseFloat(getComputedStyle(document.querySelector('#hours-countdown')).fontSize),scroll:[document.documentElement.scrollWidth,document.documentElement.scrollHeight,innerWidth,innerHeight],playing:!v.paused,time:v.currentTime,status:document.querySelector('#status').hidden,layers:videos.length,contained:videos.every(x=>getComputedStyle(x).objectFit==='contain')}}""")
   checks.append({'viewport':[width,height],**result,'errors':errors}); page.close()
  b.close()
 print(json.dumps(checks,ensure_ascii=False))
@@ -20,3 +20,4 @@ for c in checks:
  assert c['timer'][0] > c['scroll'][2] / 2 and c['timer'][1] > c['scroll'][3] / 2
  assert c['timerLabel'] in ('До открытия осталось:', 'Открыто до:') and len(c['timerText']) == 8
  assert c['timerFont'] >= 44
+ assert c['timerLabelFont'] >= 22.5
