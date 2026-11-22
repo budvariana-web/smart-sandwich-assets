@@ -11,26 +11,30 @@
     :root { --accent:#1e88e5; --ink:#f6fbff; --shade:rgba(4,15,28,.7); }
     * { box-sizing:border-box; }
     html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#000; font-family:Arial, Helvetica, sans-serif; }
-    #stage { position:fixed; inset:0; display:grid; place-items:center; background:#000; }
-    video { width:100%; height:100%; object-fit:contain; background:#000; }
-    header { position:fixed; z-index:2; left:clamp(18px,2.1vw,58px); top:clamp(16px,2vw,48px); display:flex; align-items:baseline; gap:clamp(12px,1.2vw,30px); color:var(--ink); text-shadow:0 2px 12px #000; pointer-events:none; }
+    #stage { position:fixed; top:0; right:0; bottom:0; left:0; overflow:hidden; background:#000; }
+    .player-layer { position:absolute; top:0; right:0; bottom:0; left:0; display:block; width:100%; height:100%; margin:auto; object-fit:contain; object-position:center center; background:#000; opacity:0; transition:opacity 180ms linear; }
+    .player-layer.active { opacity:1; }
+    header { position:fixed; z-index:3; left:clamp(18px,2.1vw,58px); top:clamp(16px,2vw,48px); display:flex; align-items:baseline; gap:clamp(12px,1.2vw,30px); color:var(--ink); text-shadow:0 2px 12px #000; pointer-events:none; }
     #clock { color:#81c5ff; font-size:clamp(26px,2.3vw,72px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.035em; }
     #brand { font-size:clamp(18px,1.45vw,44px); font-weight:800; letter-spacing:.12em; white-space:nowrap; }
-    #status { position:fixed; z-index:3; left:50%; top:50%; transform:translate(-50%,-50%); max-width:75vw; padding:18px 24px; color:var(--ink); background:var(--shade); border:1px solid rgba(129,197,255,.45); border-radius:12px; text-align:center; font-size:clamp(18px,1.5vw,34px); line-height:1.35; }
+    #status { position:fixed; z-index:4; left:50%; top:50%; transform:translate(-50%,-50%); max-width:75vw; padding:18px 24px; color:var(--ink); background:var(--shade); border:1px solid rgba(129,197,255,.45); border-radius:12px; text-align:center; font-size:clamp(18px,1.5vw,34px); line-height:1.35; }
     #status[hidden] { display:none; }
   </style>
 </head>
 <body>
   <header aria-label="Smart Sandwich Bar"><time id="clock"></time><span id="brand">SMART SANDWICH BAR</span></header>
-  <main id="stage"><video id="player" muted playsinline preload="auto"></video></main>
+  <main id="stage" aria-label="Видеоэкран"><video class="player-layer active" muted playsinline preload="auto"></video><video class="player-layer" muted playsinline preload="auto"></video></main>
   <div id="status">Загрузка видеоплеера…</div>
   <script type="module">
     import { ShuffledQueue, normalizeUrls } from './assets/video-player/player-core.mjs';
     const MANIFEST_URL = './assets/video-player/playlist.json';
-    const player = document.getElementById('player');
+    const layers = [...document.querySelectorAll('.player-layer')];
     const status = document.getElementById('status');
     const queue = new ShuffledQueue();
+    let active = layers[0];
+    let standby = layers[1];
     let failures = new Set();
+    let awaitingNext = false;
 
     function show(message) { status.textContent = message; status.hidden = false; }
     function hide() { status.hidden = true; }
@@ -56,19 +60,59 @@
       }
       return '';
     }
-    function playNext() {
-      const url = nextUrl();
-      if (!url) { show('Нет доступных видеороликов. Плеер повторит попытку автоматически.'); return; }
-      player.src = url;
-      player.load();
-      player.play().then(hide).catch(() => show('Нажмите экран для запуска видеоплеера.'));
+    function buffer(layer, url) {
+      layer.dataset.url = url || '';
+      layer.dataset.ready = '0';
+      if (!url) return;
+      layer.src = url;
+      layer.load();
     }
-    player.addEventListener('ended', playNext);
-    player.addEventListener('error', () => {
-      if (player.currentSrc) failures.add(player.currentSrc);
-      playNext();
+    function prepareStandby() { buffer(standby, nextUrl()); }
+    function activateBuffered() {
+      if (standby.dataset.ready !== '1' || !standby.dataset.url) return false;
+      const old = active;
+      active = standby;
+      standby = old;
+      active.classList.add('active');
+      standby.classList.remove('active');
+      active.play().then(hide).catch(() => show('Нажмите экран для запуска видеоплеера.'));
+      standby.pause();
+      buffer(standby, nextUrl());
+      awaitingNext = false;
+      return true;
+    }
+    function firstStart() {
+      if (active.dataset.ready !== '1') return;
+      active.classList.add('active');
+      active.play().then(hide).catch(() => show('Нажмите экран для запуска видеоплеера.'));
+      prepareStandby();
+    }
+
+    layers.forEach(layer => {
+      layer.addEventListener('canplay', () => {
+        layer.dataset.ready = '1';
+        if (!active.dataset.url) return;
+        if (layer === active) firstStart();
+        else if (awaitingNext) activateBuffered();
+      });
+      layer.addEventListener('ended', () => {
+        if (layer !== active) return;
+        awaitingNext = true;
+        activateBuffered();
+      });
+      layer.addEventListener('error', () => {
+        const url = layer.dataset.url;
+        if (url) failures.add(url);
+        if (layer === standby) prepareStandby();
+        else {
+          active.classList.remove('active');
+          awaitingNext = true;
+          if (!standby.dataset.url) prepareStandby();
+          activateBuffered();
+        }
+      });
     });
-    document.addEventListener('pointerdown', () => { player.play().then(hide).catch(() => {}); }, { passive:true });
+    document.addEventListener('pointerdown', () => { active.play().then(hide).catch(() => {}); }, { passive:true });
 
     (async () => {
       try {
@@ -76,7 +120,7 @@
         setPlaylist(manifest.videoUrls);
       } catch (_) { /* retry below if the static manifest is temporarily unavailable */ }
       if (!queue.urls.length) { show('Плейлист пока недоступен. Повторная попытка через 20 секунд.'); setTimeout(() => location.reload(), 20000); return; }
-      playNext();
+      buffer(active, nextUrl());
     })();
   </script>
 </body>
