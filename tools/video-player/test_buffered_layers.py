@@ -1,7 +1,7 @@
 """Regression: never replace the visible <video> while a following clip buffers."""
 from playwright.sync_api import sync_playwright
 
-URL = 'http://127.0.0.1:8878/video-player.html'
+URL = 'http://127.0.0.1:8879/video-player.html'
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     page = browser.new_page(viewport={'width': 1280, 'height': 720})
