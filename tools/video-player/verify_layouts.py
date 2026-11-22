@@ -19,5 +19,5 @@ for c in checks:
  assert 0<=c['timer'][0]<c['timer'][2]<=c['scroll'][2] and 0<=c['timer'][1]<c['timer'][3]<=c['scroll'][3]
  assert c['timer'][0] > c['scroll'][2] / 2 and c['timer'][1] > c['scroll'][3] / 2
  assert c['timerLabel'] in ('До открытия осталось:', 'Открыто до:') and len(c['timerText']) == 8
- assert c['timerFont'] >= 44
- assert c['timerLabelFont'] >= 22.5
+ assert c['timerFont'] >= 66
+ assert c['timerLabelFont'] >= 33.75
