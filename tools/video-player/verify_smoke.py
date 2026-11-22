@@ -1,7 +1,7 @@
-import json, time
+import json, sys, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-URL='http://127.0.0.1:8877/video-player.html'
+URL=sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8877/video-player.html'
 shot=Path(r'C:\Users\Asus\AppData\Local\hermes\projects\smart-sandwich-bar\artifacts\video-player-1280x720.png')
 with sync_playwright() as p:
  b=p.chromium.launch(headless=True); c=b.new_context(viewport={'width':1280,'height':720}); page=c.new_page(); errors=[]
