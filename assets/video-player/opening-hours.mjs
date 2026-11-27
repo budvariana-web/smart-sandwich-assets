@@ -35,11 +35,17 @@ export function getBarStatus(now = new Date(), timeZone = 'Europe/Podgorica') {
   const p = partsAt(now, timeZone);
   const todayMinute = p.hour * 60 + p.minute;
   if (isServiceDay(p.year, p.month, p.day)) {
-    for (const [start, end] of OPENING_WINDOWS) {
+    for (let index = 0; index < OPENING_WINDOWS.length; index += 1) {
+      const [start, end] = OPENING_WINDOWS[index];
       const startAt = instantForLocal(p.year, p.month, p.day, start, timeZone);
       const endAt = instantForLocal(p.year, p.month, p.day, end, timeZone);
       if (now < startAt) return { kind:'opens', label:'До открытия осталось:', value:formatDuration(startAt - now), nextOpen:formatHour(start) };
-      if (now >= startAt && now < endAt) return { kind:'open', label:'Открыто до:', value:formatDuration(endAt - now), nextOpen:formatHour(end) };
+      if (now >= startAt && now < endAt) {
+        const isBreakAhead = index < OPENING_WINDOWS.length - 1;
+        return isBreakAhead
+          ? { kind:'break', label:'До перерыва осталось:', value:formatDuration(endAt - now), nextOpen:formatHour(end) }
+          : { kind:'closes', label:'До закрытия осталось:', value:formatDuration(endAt - now), nextOpen:formatHour(end) };
+      }
     }
   }
   const cursor = new Date(Date.UTC(p.year, p.month - 1, p.day));
